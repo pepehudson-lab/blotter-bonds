@@ -3,16 +3,16 @@ const cors    = require('cors');
 const sql     = require('mssql');
 
 const app  = express();
-const PORT = 3001;
+const PORT = process.env.PORT || 3001;
 
 app.use(cors());
 app.use(express.json());
 
 const dbConfig = {
-  server:   'mdin3.cke3mhvwnvhc.us-west-2.rds.amazonaws.com',
-  database: 'mdin',
-  user:     'sa2',
-  password: 'cv934oct',
+  server:   process.env.MSSQL_SERVER   || 'mdin3.cke3mhvwnvhc.us-west-2.rds.amazonaws.com',
+  database: process.env.MSSQL_DATABASE || 'mdin',
+  user:     process.env.MSSQL_USER     || 'sa2',
+  password: process.env.MSSQL_PASSWORD || 'cv934oct',
   options:  { encrypt: true, trustServerCertificate: true },
   connectTimeout:  30000,
   requestTimeout:  60000,

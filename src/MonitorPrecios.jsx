@@ -261,7 +261,7 @@ export default function MonitorPrecios({ emisoras, cargandoEmisoras }) {
     if (!instrSel) return;
     setLoading(true); setError(null);
     const dias = RANGOS.find(r => r.label === rango)?.dias ?? 90;
-    fetch(`/api/historico?emisora=${instrSel.emisora}&serie=${instrSel.serie}&dias=${dias}`)
+    fetch(`${import.meta.env.VITE_API_URL || ''}/api/historico?emisora=${instrSel.emisora}&serie=${instrSel.serie}&dias=${dias}`)
       .then(r => r.json())
       .then(json => {
         if (!json.ok) throw new Error(json.error);

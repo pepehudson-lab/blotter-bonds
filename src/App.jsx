@@ -239,7 +239,7 @@ export default function BlotterBondsINVEX() {
   // Carga emisoras desde la BD al montar
   useEffect(() => {
     setCargando(true);
-    fetch('/api/emisoras')
+    fetch(`${import.meta.env.VITE_API_URL || ''}/api/emisoras`)
       .then(r => r.json())
       .then(({ data }) => setEmisoras(data || []))
       .catch(() => setEmisoras([]))
@@ -255,7 +255,7 @@ export default function BlotterBondsINVEX() {
     setForm(f => ({ ...f, emisor: `${emisora} ${serie}`, tipo: "Gubernamental", moneda: "MXN" }));
     // Intenta obtener precio y datos del bono
     try {
-      const res  = await fetch(`/api/precio?emisora=${emisora}&serie=${serie}&proveedor=${proveedor}`);
+      const res  = await fetch(`${import.meta.env.VITE_API_URL || ''}/api/precio?emisora=${emisora}&serie=${serie}&proveedor=${proveedor}`);
       const json = await res.json();
       if (json.ok) {
         const d = json.data;
