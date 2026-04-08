@@ -1,0 +1,3 @@
+✅ API corriendo en http://localhost:3001
+   GET /api/emisoras  — lista Valmer + PIP
+   GET /api/precio    — precio por emisora/serie
