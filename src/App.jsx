@@ -108,6 +108,7 @@ export default function BlotterBondsINVEX() {
   const [cargandoEmisoras, setCargando] = useState(false);
   const [dropdownAbierto, setDropdown]  = useState(false);
   const [busqEmisora, setBusqEmisora]   = useState("");
+  const [emisoraElegida, setEmisoraEl]  = useState(null); // { emisora, proveedor } paso 2
   const [modoCorreccion, setModoCorr]   = useState(null); // ticket que se está corrigiendo
 
   // ── AUTH (Supabase) ───────────────────────────────────────────────────────
@@ -278,6 +279,7 @@ export default function BlotterBondsINVEX() {
     setPlantillaSel("");
     setDropdown(false);
     setBusqEmisora("");
+    setEmisoraEl(null);
   };
 
   const registrarOp = async () => {
@@ -1185,51 +1187,113 @@ export default function BlotterBondsINVEX() {
                     background:"#07090e", border:"1px solid #fbbf24", borderTop:"none",
                     borderRadius:"0 0 4px 4px", boxShadow:"0 8px 32px rgba(0,0,0,.6)",
                   }}>
-                    {/* Barra de búsqueda */}
-                    <div style={{padding:"8px 10px",borderBottom:"1px solid #101820",background:"#050710"}}>
-                      <div style={{position:"relative",display:"flex",alignItems:"center"}}>
-                        <span style={{position:"absolute",left:10,color:"#3a5060",fontSize:12,pointerEvents:"none"}}>⌕</span>
-                        <input
-                          autoFocus
-                          placeholder="Escribe emisora, serie o TV…"
-                          value={busqEmisora}
-                          onChange={e => setBusqEmisora(e.target.value)}
-                          onClick={e => e.stopPropagation()}
-                          style={{
-                            background:"#0b0e16", border:"1px solid #263040",
-                            borderRadius:3, color:"#dce8f8", fontSize:12,
-                            padding:"7px 10px 7px 30px", width:"100%", outline:"none",
-                          }}
-                        />
-                        {busqEmisora && (
-                          <button
-                            onClick={e => { e.stopPropagation(); setBusqEmisora(""); }}
-                            style={{position:"absolute",right:8,background:"none",border:"none",color:"#3a5060",cursor:"pointer",fontSize:13,lineHeight:1}}
-                          >✕</button>
-                        )}
-                      </div>
-                    </div>
 
-                    {/* Lista filtrada */}
-                    {(()=>{
+                    {/* ── PASO 2: series de la emisora elegida ── */}
+                    {emisoraElegida ? (()=>{
+                      const { emisora: emNom, proveedor: prov } = emisoraElegida;
+                      const isPIP    = prov === 'PIP';
+                      const provColor = isPIP ? "#fbbf24" : "#5bc8fa";
+                      const series = emisoras.filter(e => e.emisora === emNom && e.proveedor === prov);
+                      const q      = busqEmisora.trim().toUpperCase();
+                      const filtradas = q ? series.filter(e => e.serie.includes(q) || e.tv.includes(q)) : series;
+
+                      return (
+                        <>
+                          {/* Header con back */}
+                          <div style={{
+                            display:"flex", alignItems:"center", gap:8,
+                            padding:"8px 12px", borderBottom:"1px solid #101820",
+                            background:"#050710",
+                          }}>
+                            <button
+                              onClick={e => { e.stopPropagation(); setEmisoraEl(null); setBusqEmisora(""); }}
+                              style={{background:"none",border:"none",color:"#3a5060",cursor:"pointer",fontSize:14,lineHeight:1,padding:"0 4px"}}
+                            >←</button>
+                            <span style={{fontWeight:800,fontSize:12,color:"#dce8f8",flex:1}}>{emNom}</span>
+                            <span style={{
+                              fontSize:8,fontWeight:800,letterSpacing:1,padding:"2px 6px",borderRadius:2,
+                              color: provColor, border:`1px solid ${provColor}33`, background:"#080e18",
+                            }}>{prov}</span>
+                          </div>
+                          {/* Búsqueda de serie */}
+                          <div style={{padding:"8px 10px",borderBottom:"1px solid #101820",background:"#050710"}}>
+                            <div style={{position:"relative",display:"flex",alignItems:"center"}}>
+                              <span style={{position:"absolute",left:10,color:"#3a5060",fontSize:12,pointerEvents:"none"}}>⌕</span>
+                              <input
+                                autoFocus
+                                placeholder="Filtrar serie…"
+                                value={busqEmisora}
+                                onChange={e => setBusqEmisora(e.target.value)}
+                                onClick={e => e.stopPropagation()}
+                                style={{
+                                  background:"#0b0e16", border:"1px solid #263040",
+                                  borderRadius:3, color:"#dce8f8", fontSize:12,
+                                  padding:"7px 10px 7px 30px", width:"100%", outline:"none",
+                                }}
+                              />
+                              {busqEmisora && (
+                                <button
+                                  onClick={e => { e.stopPropagation(); setBusqEmisora(""); }}
+                                  style={{position:"absolute",right:8,background:"none",border:"none",color:"#3a5060",cursor:"pointer",fontSize:13,lineHeight:1}}
+                                >✕</button>
+                              )}
+                            </div>
+                          </div>
+                          {/* Lista de series */}
+                          <div style={{maxHeight:280,overflowY:"auto"}}>
+                            {filtradas.length === 0
+                              ? <div style={{padding:"20px",textAlign:"center",color:"#3a5060",fontSize:11}}>Sin series</div>
+                              : filtradas.map(e => {
+                                  const key = `${e.emisora}|${e.serie}|${prov}`;
+                                  const sel = plantillaSel === key;
+                                  return (
+                                    <div
+                                      key={key}
+                                      onClick={() => { aplicarPlantilla(key); setDropdown(false); setBusqEmisora(""); setEmisoraEl(null); }}
+                                      style={{
+                                        padding:"8px 14px", cursor:"pointer", display:"flex",
+                                        alignItems:"center", gap:10,
+                                        background: sel ? "#0f1a0f" : "transparent",
+                                        borderBottom:"1px solid #0b0e16", transition:"background .1s",
+                                      }}
+                                      onMouseEnter={ev => ev.currentTarget.style.background = sel ? "#0f1a0f" : "#0d111a"}
+                                      onMouseLeave={ev => ev.currentTarget.style.background = sel ? "#0f1a0f" : "transparent"}
+                                    >
+                                      <span style={{
+                                        fontSize:8,fontWeight:800,letterSpacing:1,padding:"2px 5px",borderRadius:2,
+                                        minWidth:28,textAlign:"center",background:"#080e18",
+                                        color:"#5bc8fa",border:"1px solid #143060",
+                                      }}>{e.tv}</span>
+                                      <span style={{color:"#dce8f8",fontWeight:700,fontSize:13,flex:1}}>{e.serie}</span>
+                                      {sel && <span style={{color:"#3ddc84",fontSize:10}}>✓</span>}
+                                    </div>
+                                  );
+                                })
+                            }
+                            <div style={{padding:"6px 12px",fontSize:8,color:"#2a3a4a",letterSpacing:1,borderTop:"1px solid #101820",textAlign:"center"}}>
+                              {filtradas.length} series
+                            </div>
+                          </div>
+                        </>
+                      );
+                    })()
+
+                    /* ── PASO 1: seleccionar emisora ── */
+                    } : (()=>{
                       const q = busqEmisora.trim().toUpperCase();
-                      const filtrar = arr => q
-                        ? arr.filter(e => e.emisora.includes(q) || e.serie.includes(q) || e.tv.includes(q))
-                        : arr;
-                      const valmer = filtrar(emisoras.filter(e => e.proveedor === 'Valmer'));
-                      const pip    = filtrar(emisoras.filter(e => e.proveedor === 'PIP'));
+                      // Distinct emisoras per proveedor
+                      const uniq = (prov) => {
+                        const seen = new Set();
+                        return emisoras
+                          .filter(e => e.proveedor === prov && (!q || e.emisora.includes(q) || e.tv.includes(q)))
+                          .filter(e => { if (seen.has(e.emisora)) return false; seen.add(e.emisora); return true; });
+                      };
+                      const valmer = uniq('Valmer');
+                      const pip    = uniq('PIP');
                       const total  = valmer.length + pip.length;
 
-                      if (total === 0) return (
-                        <div style={{padding:"20px",textAlign:"center",color:"#3a5060",fontSize:11}}>
-                          Sin resultados para "<span style={{color:"#fbbf24"}}>{busqEmisora}</span>"
-                        </div>
-                      );
-
-                      const MAX = 80; // máx por proveedor para no saturar el DOM
                       const renderGrupo = (arr, prov, color, bg, border) => arr.length === 0 ? null : (
                         <div key={prov}>
-                          {/* Header de grupo */}
                           <div style={{
                             padding:"5px 12px", fontSize:8, letterSpacing:2,
                             color, background:bg, borderBottom:`1px solid ${border}`,
@@ -1237,42 +1301,33 @@ export default function BlotterBondsINVEX() {
                             justifyContent:"space-between",
                           }}>
                             <span>{prov}</span>
-                            <span style={{opacity:.6}}>{arr.length} emisoras{arr.length > MAX ? ` (mostrando ${MAX})` : ""}</span>
+                            <span style={{opacity:.6}}>{arr.length} emisoras</span>
                           </div>
-                          {/* Filas */}
-                          {arr.slice(0, MAX).map(e => {
-                            const key = `${e.emisora}|${e.serie}|${prov}`;
-                            const sel = plantillaSel === key;
+                          {arr.map(e => {
+                            const seriesCount = emisoras.filter(x => x.emisora === e.emisora && x.proveedor === prov).length;
                             return (
                               <div
-                                key={key}
-                                onClick={() => { aplicarPlantilla(key); setDropdown(false); setBusqEmisora(""); }}
+                                key={e.emisora}
+                                onClick={() => { setEmisoraEl({ emisora: e.emisora, proveedor: prov }); setBusqEmisora(""); }}
                                 style={{
-                                  padding:"7px 14px", cursor:"pointer", display:"flex",
+                                  padding:"8px 14px", cursor:"pointer", display:"flex",
                                   alignItems:"center", gap:10,
-                                  background: sel ? "#0f1a0f" : "transparent",
-                                  borderBottom:"1px solid #0b0e16",
-                                  transition:"background .1s",
+                                  borderBottom:"1px solid #0b0e16", transition:"background .1s",
                                 }}
-                                onMouseEnter={ev => ev.currentTarget.style.background = sel ? "#0f1a0f" : "#0d111a"}
-                                onMouseLeave={ev => ev.currentTarget.style.background = sel ? "#0f1a0f" : "transparent"}
+                                onMouseEnter={ev => ev.currentTarget.style.background = "#0d111a"}
+                                onMouseLeave={ev => ev.currentTarget.style.background = "transparent"}
                               >
-                                {/* TV badge */}
                                 <span style={{
-                                  fontSize:8, fontWeight:800, letterSpacing:1,
-                                  padding:"2px 5px", borderRadius:2, minWidth:28,
-                                  textAlign:"center", background:"#080e18",
-                                  color:"#5bc8fa", border:"1px solid #143060",
+                                  fontSize:8,fontWeight:800,letterSpacing:1,padding:"2px 5px",borderRadius:2,
+                                  minWidth:28,textAlign:"center",background:"#080e18",
+                                  color:"#5bc8fa",border:"1px solid #143060",
                                 }}>{e.tv}</span>
-                                {/* Emisora */}
                                 <span style={{color:"#dce8f8",fontWeight:700,fontSize:12,flex:1,letterSpacing:.5}}>
                                   {q ? e.emisora.split("").map((ch,i) => (
-                                    <span key={i} style={e.emisora.slice(i,i+q.length)===q ? {color:"#fbbf24"} : {}}>{ch}</span>
+                                    <span key={i} style={e.emisora.slice(i,i+q.length)===q?{color:"#fbbf24"}:{}}>{ch}</span>
                                   )) : e.emisora}
                                 </span>
-                                {/* Serie */}
-                                <span style={{color:"#3a5060",fontSize:11}}>{e.serie}</span>
-                                {sel && <span style={{color:"#3ddc84",fontSize:10}}>✓</span>}
+                                <span style={{color:"#3a5060",fontSize:10}}>{seriesCount} series ›</span>
                               </div>
                             );
                           })}
@@ -1280,13 +1335,44 @@ export default function BlotterBondsINVEX() {
                       );
 
                       return (
-                        <div style={{maxHeight:320,overflowY:"auto"}}>
-                          {renderGrupo(valmer,"Valmer","#5bc8fa","#050a14","#101828")}
-                          {renderGrupo(pip,"PIP","#fbbf24","#0a0800","#201400")}
-                          <div style={{padding:"6px 12px",fontSize:8,color:"#2a3a4a",letterSpacing:1,borderTop:"1px solid #101820",textAlign:"center"}}>
-                            {total > MAX*2 ? `Mostrando top ${MAX} por proveedor — afina la búsqueda` : `${total} resultados`}
+                        <>
+                          {/* Barra de búsqueda */}
+                          <div style={{padding:"8px 10px",borderBottom:"1px solid #101820",background:"#050710"}}>
+                            <div style={{position:"relative",display:"flex",alignItems:"center"}}>
+                              <span style={{position:"absolute",left:10,color:"#3a5060",fontSize:12,pointerEvents:"none"}}>⌕</span>
+                              <input
+                                autoFocus
+                                placeholder="Busca emisora…"
+                                value={busqEmisora}
+                                onChange={e => setBusqEmisora(e.target.value)}
+                                onClick={e => e.stopPropagation()}
+                                style={{
+                                  background:"#0b0e16", border:"1px solid #263040",
+                                  borderRadius:3, color:"#dce8f8", fontSize:12,
+                                  padding:"7px 10px 7px 30px", width:"100%", outline:"none",
+                                }}
+                              />
+                              {busqEmisora && (
+                                <button
+                                  onClick={e => { e.stopPropagation(); setBusqEmisora(""); }}
+                                  style={{position:"absolute",right:8,background:"none",border:"none",color:"#3a5060",cursor:"pointer",fontSize:13,lineHeight:1}}
+                                >✕</button>
+                              )}
+                            </div>
                           </div>
-                        </div>
+                          <div style={{maxHeight:320,overflowY:"auto"}}>
+                            {total === 0
+                              ? <div style={{padding:"20px",textAlign:"center",color:"#3a5060",fontSize:11}}>Sin resultados</div>
+                              : <>
+                                  {renderGrupo(valmer,"Valmer","#5bc8fa","#050a14","#101828")}
+                                  {renderGrupo(pip,"PIP","#fbbf24","#0a0800","#201400")}
+                                  <div style={{padding:"6px 12px",fontSize:8,color:"#2a3a4a",letterSpacing:1,borderTop:"1px solid #101820",textAlign:"center"}}>
+                                    {total} emisoras · selecciona para ver series
+                                  </div>
+                                </>
+                            }
+                          </div>
+                        </>
                       );
                     })()}
                   </div>
@@ -1295,7 +1381,7 @@ export default function BlotterBondsINVEX() {
                 {/* Overlay para cerrar al hacer clic fuera */}
                 {dropdownAbierto && (
                   <div
-                    onClick={() => { setDropdown(false); setBusqEmisora(""); }}
+                    onClick={() => { setDropdown(false); setBusqEmisora(""); setEmisoraEl(null); }}
                     style={{position:"fixed",inset:0,zIndex:199}}
                   />
                 )}
