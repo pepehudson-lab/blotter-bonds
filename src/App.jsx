@@ -1276,10 +1276,7 @@ export default function BlotterBondsINVEX() {
                           </div>
                         </>
                       );
-                    })()
-
-                    /* ── PASO 1: seleccionar emisora ── */
-                    } : (()=>{
+                    })() : (()=>{
                       const q = busqEmisora.trim().toUpperCase();
                       // Distinct emisoras per proveedor
                       const uniq = (prov) => {
