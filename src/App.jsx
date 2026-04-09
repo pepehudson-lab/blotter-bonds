@@ -1404,7 +1404,7 @@ export default function BlotterBondsINVEX() {
               <hr className="hr" style={{marginBottom:18}}/>
 
               <div style={{fontSize:9,color:"#fbbf24",letterSpacing:2,textTransform:"uppercase",marginBottom:10}}>Datos del Bono</div>
-              <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr 1fr",gap:12,marginBottom:12}}>
+              <div className="g3" style={{marginBottom:12}}>
                 <div><div className="lbl">Fecha de Operación</div><input type="date" value={form.fecha} onChange={e=>sF("fecha",e.target.value)}/></div>
                 <div>
                   <div className="lbl">Fecha Valor</div>
@@ -1426,7 +1426,6 @@ export default function BlotterBondsINVEX() {
                     {form.fecha && form.fechaValor ? calcFechaLiquidacion(form.fecha, form.fechaValor) : "—"}
                   </div>
                 </div>
-                <div><div className="lbl">Tipo de Bono</div><select value={form.tipo} onChange={e=>sF("tipo",e.target.value)}><option>Gubernamental</option><option>Corporativo</option></select></div>
               </div>
               <div className="g2" style={{marginBottom:12}}>
                 <div><div className="lbl">Emisor</div><input placeholder="ej. Mexico Bonos, PEMEX" value={form.emisor} onChange={e=>sF("emisor",e.target.value)}/></div>
