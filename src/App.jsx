@@ -121,7 +121,9 @@ export default function BlotterBondsINVEX() {
 
   // DB field mappers
   const mapOpToDb = (op) => ({
-    id: op.id, fecha: op.fecha, emisor: op.emisor, isin: op.isin || null,
+    id: op.id, fecha: op.fecha, fecha_valor: op.fechaValor || 'T+1',
+    fecha_liquidacion: op.fechaLiquidacion || null,
+    emisor: op.emisor, isin: op.isin || null,
     tipo: op.tipo, cupon: op.cupon || null, vencimiento: op.vencimiento || null,
     tipo_venc: op.tipoVenc || null, calificacion: op.calificacion || null,
     moneda: op.moneda, titulos: op.titulos, valor_nominal: op.valorNominal,
@@ -131,7 +133,9 @@ export default function BlotterBondsINVEX() {
     estatus: op.estatus || 'Booked', notas: op.notas || null,
   });
   const mapOpFromDb = (row) => ({
-    id: row.id, fecha: row.fecha, emisor: row.emisor, isin: row.isin,
+    id: row.id, fecha: row.fecha, fechaValor: row.fecha_valor || 'T+1',
+    fechaLiquidacion: row.fecha_liquidacion,
+    emisor: row.emisor, isin: row.isin,
     tipo: row.tipo, cupon: Number(row.cupon || 0), vencimiento: row.vencimiento,
     tipoVenc: row.tipo_venc, calificacion: row.calificacion, moneda: row.moneda,
     titulos: Number(row.titulos), valorNominal: Number(row.valor_nominal),
@@ -233,7 +237,14 @@ export default function BlotterBondsINVEX() {
   const setMonDB  = makeSyncedSetter(setMon,  'monedas');
   // ─────────────────────────────────────────────────────────────────────────
 
-  const formVacio = { fecha: new Date().toISOString().slice(0, 10), emisor: "", isin: "", tipo: "Gubernamental", cupon: "", vencimiento: "", tipoVenc: "Bullet", calificacion: "A", moneda: "MXN", titulos: "", valorNominal: "100", tipoCambio: "1", compradorCp: "", pxCompra: "", vendedorCp: "", pxVenta: "", operador: "", estatus: "Booked" };
+  const calcFechaLiquidacion = (fechaOp, fechaValor) => {
+    if (!fechaOp) return "";
+    const dias = fechaValor === "T" ? 0 : parseInt(fechaValor.replace("T+",""), 10) || 0;
+    const d = new Date(fechaOp + "T12:00:00");
+    d.setDate(d.getDate() + dias);
+    return d.toISOString().slice(0, 10);
+  };
+  const formVacio = { fecha: new Date().toISOString().slice(0, 10), fechaValor: "T+1", emisor: "", isin: "", tipo: "Gubernamental", cupon: "", vencimiento: "", tipoVenc: "Bullet", calificacion: "A", moneda: "MXN", titulos: "", valorNominal: "100", tipoCambio: "1", compradorCp: "", pxCompra: "", vendedorCp: "", pxVenta: "", operador: "", estatus: "Booked" };
   const [form, setForm] = useState(formVacio);
   const sF = (k, v) => setForm(f => ({ ...f, [k]: v }));
 
@@ -286,14 +297,15 @@ export default function BlotterBondsINVEX() {
     if (!form.emisor || !form.titulos || !form.valorNominal || !form.pxCompra || !form.pxVenta || !form.compradorCp || !form.vendedorCp) return;
     const newOp = {
       ...form,
-      id:           genId(),
-      titulos:      parseFloat(form.titulos),
-      valorNominal: parseFloat(form.valorNominal),
-      tipoCambio:   parseFloat(form.tipoCambio) || 1,
-      pxCompra:     parseFloat(form.pxCompra),
-      pxVenta:      parseFloat(form.pxVenta),
-      cupon:        parseFloat(form.cupon),
-      estatus:      "Booked",
+      id:                genId(),
+      titulos:           parseFloat(form.titulos),
+      valorNominal:      parseFloat(form.valorNominal),
+      tipoCambio:        parseFloat(form.tipoCambio) || 1,
+      pxCompra:          parseFloat(form.pxCompra),
+      pxVenta:           parseFloat(form.pxVenta),
+      cupon:             parseFloat(form.cupon),
+      fechaLiquidacion:  calcFechaLiquidacion(form.fecha, form.fechaValor),
+      estatus:           "Booked",
     };
     setOps(prev => [newOp, ...prev]);
     await sb.from('operaciones').insert(mapOpToDb(newOp));
@@ -311,13 +323,14 @@ export default function BlotterBondsINVEX() {
   const confirmarCorreccion = async () => {
     if (!form.emisor || !form.titulos || !form.valorNominal || !form.pxCompra || !form.pxVenta || !form.compradorCp || !form.vendedorCp) return;
     const updatedOp = { ...form, id: modoCorreccion.id,
-      titulos:      parseFloat(form.titulos),
-      valorNominal: parseFloat(form.valorNominal),
-      tipoCambio:   parseFloat(form.tipoCambio) || 1,
-      pxCompra:     parseFloat(form.pxCompra),
-      pxVenta:      parseFloat(form.pxVenta),
-      cupon:        parseFloat(form.cupon),
-      estatus:      "Booked/Corregido",
+      titulos:           parseFloat(form.titulos),
+      valorNominal:      parseFloat(form.valorNominal),
+      tipoCambio:        parseFloat(form.tipoCambio) || 1,
+      pxCompra:          parseFloat(form.pxCompra),
+      pxVenta:           parseFloat(form.pxVenta),
+      cupon:             parseFloat(form.cupon),
+      fechaLiquidacion:  calcFechaLiquidacion(form.fecha, form.fechaValor),
+      estatus:           "Booked/Corregido",
     };
     setOps(prev => prev.map(t => t.id === modoCorreccion.id ? updatedOp : t));
     await sb.from('operaciones').update(mapOpToDb(updatedOp)).eq('id', modoCorreccion.id);
@@ -1386,8 +1399,25 @@ export default function BlotterBondsINVEX() {
               <hr className="hr" style={{marginBottom:18}}/>
 
               <div style={{fontSize:9,color:"#fbbf24",letterSpacing:2,textTransform:"uppercase",marginBottom:10}}>Datos del Bono</div>
-              <div className="g2" style={{marginBottom:12}}>
+              <div className="g3" style={{marginBottom:12}}>
                 <div><div className="lbl">Fecha de Operación</div><input type="date" value={form.fecha} onChange={e=>sF("fecha",e.target.value)}/></div>
+                <div>
+                  <div className="lbl" style={{display:"flex",justifyContent:"space-between"}}>
+                    <span>Fecha Valor</span>
+                    {form.fechaValor && form.fecha && (
+                      <span style={{color:"#5bc8fa",fontSize:9}}>
+                        Liquidación: {calcFechaLiquidacion(form.fecha, form.fechaValor)}
+                      </span>
+                    )}
+                  </div>
+                  <select value={form.fechaValor} onChange={e=>sF("fechaValor",e.target.value)}>
+                    <option value="T">T — mismo día</option>
+                    <option value="T+1">T+1</option>
+                    <option value="T+2">T+2</option>
+                    <option value="T+3">T+3</option>
+                    <option value="T+4">T+4</option>
+                  </select>
+                </div>
                 <div><div className="lbl">Tipo de Bono</div><select value={form.tipo} onChange={e=>sF("tipo",e.target.value)}><option>Gubernamental</option><option>Corporativo</option></select></div>
               </div>
               <div className="g2" style={{marginBottom:12}}>
