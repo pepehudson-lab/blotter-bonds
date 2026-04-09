@@ -241,7 +241,12 @@ export default function BlotterBondsINVEX() {
     if (!fechaOp) return "";
     const dias = fechaValor === "T" ? 0 : parseInt(fechaValor.replace("T+",""), 10) || 0;
     const d = new Date(fechaOp + "T12:00:00");
-    d.setDate(d.getDate() + dias);
+    let agregados = 0;
+    while (agregados < dias) {
+      d.setDate(d.getDate() + 1);
+      const dow = d.getDay(); // 0=Sun, 6=Sat
+      if (dow !== 0 && dow !== 6) agregados++;
+    }
     return d.toISOString().slice(0, 10);
   };
   const formVacio = { fecha: new Date().toISOString().slice(0, 10), fechaValor: "T+1", emisor: "", isin: "", tipo: "Gubernamental", cupon: "", vencimiento: "", tipoVenc: "Bullet", calificacion: "A", moneda: "MXN", titulos: "", valorNominal: "100", tipoCambio: "1", compradorCp: "", pxCompra: "", vendedorCp: "", pxVenta: "", operador: "", estatus: "Booked" };
@@ -1399,17 +1404,10 @@ export default function BlotterBondsINVEX() {
               <hr className="hr" style={{marginBottom:18}}/>
 
               <div style={{fontSize:9,color:"#fbbf24",letterSpacing:2,textTransform:"uppercase",marginBottom:10}}>Datos del Bono</div>
-              <div className="g3" style={{marginBottom:12}}>
+              <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr 1fr",gap:12,marginBottom:12}}>
                 <div><div className="lbl">Fecha de Operación</div><input type="date" value={form.fecha} onChange={e=>sF("fecha",e.target.value)}/></div>
                 <div>
-                  <div className="lbl" style={{display:"flex",justifyContent:"space-between"}}>
-                    <span>Fecha Valor</span>
-                    {form.fechaValor && form.fecha && (
-                      <span style={{color:"#5bc8fa",fontSize:9}}>
-                        Liquidación: {calcFechaLiquidacion(form.fecha, form.fechaValor)}
-                      </span>
-                    )}
-                  </div>
+                  <div className="lbl">Fecha Valor</div>
                   <select value={form.fechaValor} onChange={e=>sF("fechaValor",e.target.value)}>
                     <option value="T">T — mismo día</option>
                     <option value="T+1">T+1</option>
@@ -1417,6 +1415,16 @@ export default function BlotterBondsINVEX() {
                     <option value="T+3">T+3</option>
                     <option value="T+4">T+4</option>
                   </select>
+                </div>
+                <div>
+                  <div className="lbl">Fecha de Liq</div>
+                  <div style={{
+                    background:"#060a12", border:"1px solid #1c2633", borderRadius:3,
+                    padding:"9px 12px", color:"#5bc8fa", fontSize:12, fontWeight:600,
+                    letterSpacing:.5, minHeight:36, display:"flex", alignItems:"center",
+                  }}>
+                    {form.fecha && form.fechaValor ? calcFechaLiquidacion(form.fecha, form.fechaValor) : "—"}
+                  </div>
                 </div>
                 <div><div className="lbl">Tipo de Bono</div><select value={form.tipo} onChange={e=>sF("tipo",e.target.value)}><option>Gubernamental</option><option>Corporativo</option></select></div>
               </div>
