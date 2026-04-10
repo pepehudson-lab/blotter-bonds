@@ -110,6 +110,11 @@ export default function BlotterBondsINVEX() {
   const [busqEmisora, setBusqEmisora]   = useState("");
   const [emisoraElegida, setEmisoraEl]  = useState(null); // { emisora, proveedor } paso 2
   const [modoCorreccion, setModoCorr]   = useState(null); // ticket que se está corrigiendo
+  const [calcOpen,  setCalcOpen]  = useState(false);
+  const [calcYtm,   setCalcYtm]   = useState("");
+  const [calcFrec,  setCalcFrec]  = useState("2");   // 1=anual, 2=semestral, 4=trimestral
+  const [calcConv,  setCalcConv]  = useState("Actual/360");
+  const [calcRes,   setCalcRes]   = useState(null);  // { precioLimpio, precioSucio, interesDevengado }
 
   // ── AUTH (Supabase) ───────────────────────────────────────────────────────
   const [usuarios,    setUsuarios]  = useState([]);
@@ -249,6 +254,56 @@ export default function BlotterBondsINVEX() {
     }
     return d.toISOString().slice(0, 10);
   };
+  const calcPrecioBono = ({ valorNominal, cupon, ytm, vencimiento, fechaLiq, frecuencia, convencion }) => {
+    try {
+      const FV = parseFloat(valorNominal);
+      const C  = parseFloat(cupon) / 100;
+      const r  = parseFloat(ytm) / 100;
+      const m  = parseInt(frecuencia);
+      const settle   = new Date(fechaLiq + "T12:00:00");
+      const maturity = new Date(vencimiento + "T12:00:00");
+      if (!FV || !C || !r || !m || settle >= maturity) return null;
+
+      // Generate coupon dates backwards from maturity
+      const couponDates = [];
+      let d = new Date(maturity);
+      while (d > settle) {
+        couponDates.unshift(new Date(d));
+        if (m === 2) d.setMonth(d.getMonth() - 6);
+        else if (m === 4) d.setMonth(d.getMonth() - 3);
+        else d.setFullYear(d.getFullYear() - 1);
+      }
+      const lastCoupon = new Date(d);
+      const N = couponDates.length;
+      if (N === 0) return null;
+      const nextCoupon = couponDates[0];
+
+      const daysBetween = (a, b) => {
+        if (convencion === "30/360") {
+          const [y1,mo1,d1] = [a.getFullYear(), a.getMonth()+1, Math.min(a.getDate(),30)];
+          const [y2,mo2,d2] = [b.getFullYear(), b.getMonth()+1, Math.min(b.getDate(),30)];
+          return 360*(y2-y1) + 30*(mo2-mo1) + (d2-d1);
+        }
+        return Math.round((b - a) / 86400000);
+      };
+
+      const daysAccrued = daysBetween(lastCoupon, settle);
+      const daysPeriod  = daysBetween(lastCoupon, nextCoupon);
+      const w = (daysPeriod - daysAccrued) / daysPeriod; // fraction of period to next coupon
+
+      const couponPmt = (C / m) * FV;
+      const v = 1 / (1 + r / m);
+
+      let dirtyPrice = 0;
+      for (let i = 0; i < N; i++) dirtyPrice += couponPmt * Math.pow(v, i + w);
+      dirtyPrice += FV * Math.pow(v, (N - 1) + w);
+
+      const accruedInterest = couponPmt * (1 - w);
+      const cleanPrice = dirtyPrice - accruedInterest;
+      return { precioLimpio: cleanPrice, precioSucio: dirtyPrice, interesDevengado: accruedInterest };
+    } catch { return null; }
+  };
+
   const formVacio = { fecha: new Date().toISOString().slice(0, 10), fechaValor: "T+1", emisor: "", isin: "", tipo: "Gubernamental", cupon: "", vencimiento: "", tipoVenc: "Bullet", calificacion: "A", moneda: "MXN", titulos: "", valorNominal: "100", tipoCambio: "1", compradorCp: "", pxCompra: "", vendedorCp: "", pxVenta: "", operador: "", estatus: "Booked" };
   const [form, setForm] = useState(formVacio);
   const sF = (k, v) => setForm(f => ({ ...f, [k]: v }));
@@ -296,6 +351,9 @@ export default function BlotterBondsINVEX() {
     setDropdown(false);
     setBusqEmisora("");
     setEmisoraEl(null);
+    setCalcOpen(false);
+    setCalcYtm("");
+    setCalcRes(null);
   };
 
   const registrarOp = async () => {
@@ -1436,9 +1494,124 @@ export default function BlotterBondsINVEX() {
                 <div><div className="lbl">Vencimiento</div><input type="date" value={form.vencimiento} onChange={e=>sF("vencimiento",e.target.value)}/></div>
                 <div><div className="lbl">Tipo de Vencimiento</div><select value={form.tipoVenc} onChange={e=>sF("tipoVenc",e.target.value)}>{tiposVenc.map(x=><option key={x}>{x}</option>)}</select></div>
               </div>
-              <div className="g3" style={{marginBottom:20}}>
+              <div className="g3" style={{marginBottom:12}}>
                 <div><div className="lbl">Calificación</div><select value={form.calificacion} onChange={e=>sF("calificacion",e.target.value)}>{calificaciones.map(r=><option key={r}>{r}</option>)}</select></div>
                 <div><div className="lbl">Moneda</div><select value={form.moneda} onChange={e=>{ sF("moneda",e.target.value); if(e.target.value==="MXN") sF("tipoCambio","1"); }}>{MONEDAS.map(c=><option key={c}>{c}</option>)}</select></div>
+              </div>
+
+              {/* ── CALCULADORA DE PRECIO ── */}
+              <div style={{marginBottom:20}}>
+                <button
+                  type="button"
+                  onClick={() => { setCalcOpen(o => !o); setCalcRes(null); }}
+                  style={{
+                    width:"100%", padding:"7px 14px", background: calcOpen ? "#0d1a0d" : "#070b0f",
+                    border:`1px solid ${calcOpen ? "#3ddc84" : "#1c2633"}`, borderRadius:3,
+                    color: calcOpen ? "#3ddc84" : "#3a5060", fontSize:9, letterSpacing:2,
+                    textTransform:"uppercase", cursor:"pointer", display:"flex",
+                    justifyContent:"space-between", alignItems:"center", transition:"all .15s",
+                  }}
+                >
+                  <span>∫ Calculadora de Precio por Rendimiento</span>
+                  <span style={{transform: calcOpen?"rotate(180deg)":"none", transition:"transform .2s"}}>▼</span>
+                </button>
+
+                {calcOpen && (
+                  <div style={{
+                    border:"1px solid #3ddc8440", borderTop:"none", borderRadius:"0 0 4px 4px",
+                    background:"#040709", padding:"16px",
+                  }}>
+                    {/* Inputs */}
+                    <div style={{display:"grid", gridTemplateColumns:"1fr 1fr 1fr 1fr", gap:10, marginBottom:14}}>
+                      <div>
+                        <div className="lbl">Rendimiento / YTM (%)</div>
+                        <input
+                          type="number" step="0.001" placeholder="ej. 9.250"
+                          value={calcYtm} onChange={e => { setCalcYtm(e.target.value); setCalcRes(null); }}
+                          style={{borderColor:"#3ddc8440"}}
+                        />
+                      </div>
+                      <div>
+                        <div className="lbl">Frecuencia Cupón</div>
+                        <select value={calcFrec} onChange={e => { setCalcFrec(e.target.value); setCalcRes(null); }} style={{borderColor:"#3ddc8440"}}>
+                          <option value="1">Anual</option>
+                          <option value="2">Semestral</option>
+                          <option value="4">Trimestral</option>
+                        </select>
+                      </div>
+                      <div>
+                        <div className="lbl">Convención de Días</div>
+                        <select value={calcConv} onChange={e => { setCalcConv(e.target.value); setCalcRes(null); }} style={{borderColor:"#3ddc8440"}}>
+                          <option>Actual/360</option>
+                          <option>Actual/365</option>
+                          <option>30/360</option>
+                        </select>
+                      </div>
+                      <div style={{display:"flex", alignItems:"flex-end"}}>
+                        <button
+                          type="button"
+                          disabled={!calcYtm || !form.cupon || !form.vencimiento || !form.valorNominal}
+                          onClick={() => {
+                            const liq = calcFechaLiquidacion(form.fecha, form.fechaValor);
+                            const res = calcPrecioBono({
+                              valorNominal: form.valorNominal, cupon: form.cupon,
+                              ytm: calcYtm, vencimiento: form.vencimiento,
+                              fechaLiq: liq || form.fecha,
+                              frecuencia: calcFrec, convencion: calcConv,
+                            });
+                            setCalcRes(res);
+                          }}
+                          style={{
+                            width:"100%", padding:"9px 0", background:"#0d2a0d",
+                            border:"1px solid #3ddc84", borderRadius:3,
+                            color:"#3ddc84", fontWeight:700, fontSize:11,
+                            letterSpacing:1, cursor:"pointer",
+                            opacity: (!calcYtm||!form.cupon||!form.vencimiento||!form.valorNominal) ? .4 : 1,
+                          }}
+                        >CALCULAR</button>
+                      </div>
+                    </div>
+
+                    {/* Hint on missing fields */}
+                    {(!form.cupon || !form.vencimiento || !form.valorNominal) && (
+                      <div style={{fontSize:9,color:"#fbbf24",marginBottom:10,letterSpacing:.5}}>
+                        ⚠ Completa: {[!form.cupon&&"Cupón", !form.vencimiento&&"Vencimiento", !form.valorNominal&&"Valor Nominal"].filter(Boolean).join(", ")}
+                      </div>
+                    )}
+
+                    {/* Results */}
+                    {calcRes && (
+                      <div style={{borderTop:"1px solid #1a2a1a", paddingTop:14}}>
+                        <div style={{display:"grid", gridTemplateColumns:"1fr 1fr 1fr", gap:10, marginBottom:12}}>
+                          {[
+                            { lbl:"Precio Limpio",       val: calcRes.precioLimpio,     color:"#fbbf24", bold:true },
+                            { lbl:"Interés Devengado",   val: calcRes.interesDevengado, color:"#5bc8fa" },
+                            { lbl:"Precio Sucio",        val: calcRes.precioSucio,      color:"#3ddc84" },
+                          ].map(({ lbl, val, color, bold }) => (
+                            <div key={lbl} style={{background:"#070b10", border:"1px solid #1c2633", borderRadius:4, padding:"10px 12px"}}>
+                              <div style={{fontSize:8,color:"#3a5060",letterSpacing:1.5,textTransform:"uppercase",marginBottom:4}}>{lbl}</div>
+                              <div style={{fontSize:15, fontWeight: bold?800:600, color, fontFamily:"monospace", letterSpacing:.5}}>
+                                {val.toFixed(6)}
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                        <div style={{display:"flex", gap:8}}>
+                          <button
+                            type="button"
+                            onClick={() => { sF("pxCompra", calcRes.precioLimpio.toFixed(6)); sF("pxVenta", calcRes.precioLimpio.toFixed(6)); }}
+                            style={{flex:1, padding:"7px 0", background:"#0d1a00", border:"1px solid #fbbf24", borderRadius:3, color:"#fbbf24", fontSize:10, fontWeight:700, cursor:"pointer", letterSpacing:1}}
+                          >↗ USAR PRECIO LIMPIO → Px Compra &amp; Venta</button>
+                          <button
+                            type="button"
+                            onClick={() => { sF("pxCompra", calcRes.precioSucio.toFixed(6)); sF("pxVenta", calcRes.precioSucio.toFixed(6)); }}
+                            style={{flex:1, padding:"7px 0", background:"#001a0a", border:"1px solid #3ddc84", borderRadius:3, color:"#3ddc84", fontSize:10, fontWeight:700, cursor:"pointer", letterSpacing:1}}
+                          >↗ USAR PRECIO SUCIO → Px Compra &amp; Venta</button>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                )}
               </div>
               {/* Títulos, Valor Nominal, Tipo de Cambio */}
               <div style={{display:"grid",gridTemplateColumns:form.moneda!=="MXN"?"1fr 1fr 1fr":"1fr 1fr",gap:12,marginBottom:20}}>
