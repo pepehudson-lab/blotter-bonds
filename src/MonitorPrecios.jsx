@@ -43,7 +43,7 @@ function TooltipCustom({ active, payload, label, unit = "%" }) {
       padding: "10px 14px", fontFamily: "IBM Plex Mono,monospace", fontSize: 10,
       boxShadow: "0 4px 20px rgba(0,0,0,.12)",
     }}>
-      <div style={{ color: "#c9962a", fontWeight: 800, marginBottom: 6, letterSpacing: 1 }}>{label}</div>
+      <div style={{ color: "#9C0033", fontWeight: 800, marginBottom: 6, letterSpacing: 1 }}>{label}</div>
       {payload.map(p => (
         <div key={p.dataKey} style={{ display: "flex", gap: 10, alignItems: "center", marginBottom: 3 }}>
           <span style={{ width: 8, height: 8, borderRadius: "50%", background: p.color, display: "inline-block" }} />
@@ -80,7 +80,7 @@ function GraficoPrecio({ data, titulo, claveV, claveP, loading, unit = "%" }) {
     <div style={{ background: "#ffffff", border: "1px solid #e0d4b8", borderRadius: 4, padding: "16px 12px 8px" }}>
       <div style={{ fontSize: 9, color: "#8a7050", letterSpacing: 2, textTransform: "uppercase", marginBottom: 12, display: "flex", justifyContent: "space-between" }}>
         <span style={{ color: "#1a1200", fontWeight: 700 }}>{titulo}</span>
-        {loading && <span style={{ color: "#c9962a" }}>Cargando…</span>}
+        {loading && <span style={{ color: "#9C0033" }}>Cargando…</span>}
       </div>
       <div style={{ height: 260 }}>
         <ResponsiveContainer width="100%" height="100%">
@@ -133,7 +133,7 @@ function BuscadorEmisoras({ emisoras, cargando, onSelect, selActual }) {
       <div
         onClick={() => { if (!cargando) { setAbierto(d => !d); setBusq(""); } }}
         style={{
-          background: "#ffffff", border: `1px solid ${abierto ? "#c9962a" : "#d8ceb8"}`,
+          background: "#ffffff", border: `1px solid ${abierto ? "#9C0033" : "#d8ceb8"}`,
           borderRadius: abierto ? "3px 3px 0 0" : 3,
           padding: "10px 14px", cursor: "pointer", display: "flex",
           justifyContent: "space-between", alignItems: "center", transition: "border .15s",
@@ -157,7 +157,7 @@ function BuscadorEmisoras({ emisoras, cargando, onSelect, selActual }) {
       {abierto && (
         <div style={{
           position: "absolute", top: "100%", left: 0, right: 0, zIndex: 200,
-          background: "#faf8f4", border: "1px solid #c9962a", borderTop: "none",
+          background: "#faf8f4", border: "1px solid #9C0033", borderTop: "none",
           borderRadius: "0 0 4px 4px", boxShadow: "0 8px 32px rgba(0,0,0,.12)",
         }}>
           {/* Buscador */}
@@ -191,7 +191,7 @@ function BuscadorEmisoras({ emisoras, cargando, onSelect, selActual }) {
 
             if (!valmer.length && !pip.length) return (
               <div style={{ padding: "20px", textAlign: "center", color: "#8a7050", fontSize: 11 }}>
-                Sin resultados para "<span style={{ color: "#c9962a" }}>{busq}</span>"
+                Sin resultados para "<span style={{ color: "#9C0033" }}>{busq}</span>"
               </div>
             );
 
@@ -227,7 +227,7 @@ function BuscadorEmisoras({ emisoras, cargando, onSelect, selActual }) {
             return (
               <div style={{ maxHeight: 340, overflowY: "auto" }}>
                 {renderGrupo(valmer, "Valmer", "#1a5a9a", "#eef4fa", "#c8daf0")}
-                {renderGrupo(pip,    "PIP",    "#c9962a", "#fff8e8", "#e8d080")}
+                {renderGrupo(pip,    "PIP",    "#9C0033", "#fce8ee", "#e8a0b8")}
                 <div style={{ padding: "6px 12px", fontSize: 8, color: "#8a7050", letterSpacing: 1,
                   borderTop: "1px solid #d8ceb8", textAlign: "center" }}>
                   {valmer.length + pip.length} resultados · afina la búsqueda para ver más
@@ -295,7 +295,7 @@ export default function MonitorPrecios({ emisoras, cargandoEmisoras }) {
           padding:5px 14px;border-radius:2px;font-family:inherit;font-size:9px;
           letter-spacing:2px;text-transform:uppercase;font-weight:700;transition:all .15s}
         .rng-btn:hover{color:#1a1200;border-color:#8a7050}
-        .rng-btn.activo{background:#fff8e8;border-color:#c9962a;color:#c9962a}
+        .rng-btn.activo{background:#fce8ee;border-color:#9C0033;color:#9C0033}
       `}</style>
 
       {/* ── Cabecera y selector ── */}
@@ -348,7 +348,7 @@ export default function MonitorPrecios({ emisoras, cargandoEmisoras }) {
             <span style={{ fontSize: 15, fontWeight: 900, color: "#1a1200", letterSpacing: 1 }}>{instrSel.emisora}</span>
             <span style={{ fontSize: 13, color: "#8a7050" }}>·</span>
             <span style={{ fontSize: 13, color: "#1a5a9a", fontWeight: 700 }}>Serie {instrSel.serie}</span>
-            {loading && <span style={{ fontSize: 9, color: "#c9962a", letterSpacing: 1, marginLeft: 8 }}>● Actualizando…</span>}
+            {loading && <span style={{ fontSize: 9, color: "#9C0033", letterSpacing: 1, marginLeft: 8 }}>● Actualizando…</span>}
             <span style={{ marginLeft: "auto", fontSize: 9, color: "#8a7050" }}>
               {rawV.length} obs. Valmer · {rawP.length} obs. PIP
             </span>

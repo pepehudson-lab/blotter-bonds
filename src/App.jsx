@@ -517,25 +517,25 @@ export default function BlotterBondsINVEX() {
       <style>{`
         *{box-sizing:border-box;margin:0;padding:0}
         ::-webkit-scrollbar{width:5px;height:5px;background:#ede8df}
-        ::-webkit-scrollbar-thumb{background:#c9b890;border-radius:3px}
-        .tab{background:none;border:none;color:#c9b890;font-family:inherit;font-size:10px;letter-spacing:2px;text-transform:uppercase;cursor:pointer;padding:10px 16px;border-bottom:2px solid transparent;transition:all .2s;font-weight:600}
-        .tab.on{color:#c9962a;border-bottom-color:#c9962a}
-        .tab:hover:not(.on){color:#f0d898}
+        ::-webkit-scrollbar-thumb{background:#c9a0b0;border-radius:3px}
+        .tab{background:none;border:none;color:rgba(255,255,255,0.65);font-family:inherit;font-size:10px;letter-spacing:2px;text-transform:uppercase;cursor:pointer;padding:10px 16px;border-bottom:2px solid transparent;transition:all .2s;font-weight:600}
+        .tab.on{color:#ffffff;border-bottom-color:#ffffff}
+        .tab:hover:not(.on){color:rgba(255,255,255,0.92)}
         input,select{background:#ffffff;border:1px solid #d8ceb8;color:#1a1200;font-family:inherit;font-size:12px;padding:8px 10px;border-radius:3px;outline:none;width:100%;transition:border .2s}
-        input:focus,select:focus{border-color:#c9962a;box-shadow:0 0 0 2px #c9962a18}
+        input:focus,select:focus{border-color:#9C0033;box-shadow:0 0 0 2px #9C003318}
         select option{background:#ffffff;color:#1a1200}
-        .btn-gold{font-family:inherit;font-size:10px;letter-spacing:1.5px;text-transform:uppercase;cursor:pointer;padding:9px 20px;border-radius:3px;font-weight:700;transition:all .15s;background:#c9962a;border:1px solid #c9962a;color:#ffffff}
-        .btn-gold:hover{background:#a87820;border-color:#a87820;color:#ffffff}
+        .btn-gold{font-family:inherit;font-size:10px;letter-spacing:1.5px;text-transform:uppercase;cursor:pointer;padding:9px 20px;border-radius:3px;font-weight:700;transition:all .15s;background:#9C0033;border:1px solid #9C0033;color:#ffffff}
+        .btn-gold:hover{background:#7a0028;border-color:#7a0028;color:#ffffff}
         .btn-ghost{background:none;border:1px solid #d8ceb8;color:#8a7050;cursor:pointer;padding:8px 16px;border-radius:3px;font-family:inherit;font-size:10px;letter-spacing:1.5px;text-transform:uppercase;transition:all .15s}
         .btn-ghost:hover{color:#1a1200;border-color:#8a7050}
         .card{background:#ffffff;border:1px solid #e0d4b8;border-radius:4px}
         .th{background:#f0ebe2;color:#8a7050;font-size:9px;letter-spacing:2px;text-transform:uppercase;padding:9px 10px;text-align:left;border-bottom:1px solid #e0d4b8;cursor:pointer;white-space:nowrap;user-select:none;transition:color .15s}
         .th:hover{color:#1a1200}
         .td{padding:8px 10px;font-size:11px;border-bottom:1px solid #f0ebe2;white-space:nowrap;vertical-align:middle;color:#1a1200}
-        .fila:hover .td{background:#faf4e8}
+        .fila:hover .td{background:#fdf4f6}
         .pill{display:inline-block;padding:2px 7px;border-radius:2px;font-size:9px;font-weight:700;letter-spacing:1px}
         .p-gub{background:#ddeeff;color:#1a4a8a;border:1px solid #b0cce8}
-        .p-corp{background:#fff3cc;color:#8a6000;border:1px solid #e8d080}
+        .p-corp{background:#fff3cc;color:#8a6000;border:1px solid #e8a0b8}
         .p-liq{background:#d8f5e4;color:#1a6030;border:1px solid #90d4a8}
         .p-pend{background:#fff0d8;color:#8a5000;border:1px solid #e8c070}
         .p-canc{background:#fde8e8;color:#901818;border:1px solid #e8a0a0}
@@ -552,8 +552,8 @@ export default function BlotterBondsINVEX() {
         .hr{border:none;border-top:1px solid #e0d4b8}
         .pos{color:#1a7a3a}.neg{color:#c02020}
         .cb-cell{width:32px;padding:0 8px;text-align:center;border-bottom:1px solid #f0ebe2;vertical-align:middle}
-        .cb-cell input[type=checkbox]{width:13px;height:13px;cursor:pointer;accent-color:#c9962a;background:#ffffff;border:1px solid #c9b890;border-radius:2px}
-        .bulk-bar{display:flex;align-items:center;gap:8px;background:#fff8ec;border:1px solid #e8d898;border-radius:3px;padding:6px 14px;animation:fadeIn .15s}
+        .cb-cell input[type=checkbox]{width:13px;height:13px;cursor:pointer;accent-color:#9C0033;background:#ffffff;border:1px solid #c9b890;border-radius:2px}
+        .bulk-bar{display:flex;align-items:center;gap:8px;background:#fce8ee;border:1px solid #e8a0b8;border-radius:3px;padding:6px 14px;animation:fadeIn .15s}
         @keyframes fadeIn{from{opacity:0;transform:translateY(-4px)}to{opacity:1;transform:translateY(0)}}
         .btn-red{font-family:inherit;font-size:10px;letter-spacing:1.5px;text-transform:uppercase;cursor:pointer;padding:7px 16px;border-radius:3px;font-weight:700;transition:all .15s;background:#fde8e8;border:1px solid #e08080;color:#901818}
         .btn-red:hover{background:#c02020;border-color:#c02020;color:#ffffff}
@@ -563,8 +563,8 @@ export default function BlotterBondsINVEX() {
         .p-trader{background:#d8f5e4;color:#1a6030;border:1px solid #90d4a8}
         .login-bg{position:fixed;inset:0;background:#f5f0e8;z-index:200;display:flex;align-items:center;justify-content:center}
         .login-card{background:#ffffff;border:1px solid #d8ceb8;border-radius:8px;width:360px;padding:36px 32px;box-shadow:0 8px 32px rgba(0,0,0,.10)}
-        .btn-login{font-family:inherit;font-size:11px;letter-spacing:2px;text-transform:uppercase;cursor:pointer;padding:11px 0;border-radius:3px;font-weight:700;transition:all .15s;background:#c9962a;border:1px solid #c9962a;color:#ffffff;width:100%}
-        .btn-login:hover{background:#a87820;border-color:#a87820}
+        .btn-login{font-family:inherit;font-size:11px;letter-spacing:2px;text-transform:uppercase;cursor:pointer;padding:11px 0;border-radius:3px;font-weight:700;transition:all .15s;background:#9C0033;border:1px solid #9C0033;color:#ffffff;width:100%}
+        .btn-login:hover{background:#7a0028;border-color:#7a0028}
         .btn-logout{background:none;border:1px solid rgba(255,255,255,0.25);color:rgba(255,255,255,0.7);cursor:pointer;padding:6px 12px;border-radius:3px;font-family:inherit;font-size:9px;letter-spacing:1.5px;text-transform:uppercase;transition:all .15s}
         .btn-logout:hover{color:#ffffff;border-color:rgba(255,255,255,0.6)}
       `}</style>
@@ -572,7 +572,7 @@ export default function BlotterBondsINVEX() {
       {/* ── LOADING SCREEN ───────────────────────────────────────────────── */}
       {appCargando && (
         <div className="login-bg" style={{ flexDirection: "column", gap: 16 }}>
-          <img src="/logoinvex.svg" alt="INVEX" style={{ height: 20, filter: "brightness(0)", opacity: .35 }} />
+          <img src="/logoinvex_crimson.svg" alt="INVEX" style={{ height: 20, width: "auto", opacity: .45 }} />
           <div style={{ fontSize: 10, color: "#8a7050", letterSpacing: 3 }}>CARGANDO…</div>
         </div>
       )}
@@ -583,10 +583,9 @@ export default function BlotterBondsINVEX() {
           <div className="login-card">
             {/* Branding */}
             <div style={{ textAlign: "center", marginBottom: 28 }}>
-              <img src="/logoinvex.svg" alt="INVEX" style={{ height: 20, filter: "brightness(0)", opacity: .7, marginBottom: 14 }} />
-              <div style={{ fontSize: 22, fontWeight: 900, color: "#c9962a", letterSpacing: 6, lineHeight: 1 }}>IBB</div>
-              <div style={{ fontSize: 9, color: "#8a7050", letterSpacing: 3, marginTop: 4 }}>INVEX BOND BLOTTER</div>
-              <div style={{ width: 40, height: 2, background: "#c9962a", margin: "16px auto 0", borderRadius: 1 }} />
+              <img src="/logoinvex_crimson.svg" alt="INVEX" style={{ height: 26, width: "auto", marginBottom: 16 }} />
+              <div style={{ fontSize: 9, color: "#8a7050", letterSpacing: 3, marginBottom: 2 }}>BOND BLOTTER</div>
+              <div style={{ width: 40, height: 2, background: "#9C0033", margin: "10px auto 0", borderRadius: 1 }} />
             </div>
             {/* Form */}
             <div style={{ marginBottom: 12 }}>
@@ -621,7 +620,7 @@ export default function BlotterBondsINVEX() {
       )}
 
       {/* ENCABEZADO */}
-      <div style={{ background: "#040610", borderBottom: "1px solid #101820" }}>
+      <div style={{ background: "#9C0033", borderBottom: "1px solid #7a0028" }}>
         <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "14px 24px 0" }}>
           <div style={{ display: "flex", alignItems: "center", gap: 16 }}>
             {/* Logo INVEX */}
@@ -631,34 +630,34 @@ export default function BlotterBondsINVEX() {
                 alt="INVEX"
                 style={{ height: 22, width: "auto", filter: "brightness(0) invert(1)", opacity: 0.92 }}
               />
-              <div style={{ width: 1, height: 24, background: "rgba(201,150,42,0.3)" }} />
+              <div style={{ width: 1, height: 24, background: "rgba(255,255,255,0.25)" }} />
               <div style={{ display: "flex", flexDirection: "column" }}>
-                <div style={{ fontSize: 16, fontWeight: 900, color: "#c9962a", letterSpacing: 4, lineHeight: 1 }}>IBB</div>
-                <div style={{ fontSize: 8, color: "#8a7050", letterSpacing: 2, marginTop: 3 }}>INVEX BOND BLOTTER</div>
+                <div style={{ fontSize: 16, fontWeight: 900, color: "#ffffff", letterSpacing: 4, lineHeight: 1 }}>IBB</div>
+                <div style={{ fontSize: 8, color: "rgba(255,255,255,0.6)", letterSpacing: 2, marginTop: 3 }}>INVEX BOND BLOTTER</div>
               </div>
             </div>
-            <div style={{ width: 1, height: 28, background: "#dcd4c4" }} />
+            <div style={{ width: 1, height: 28, background: "rgba(255,255,255,0.25)" }} />
             <div>
-              <div style={{ fontSize: 9, color: "#8a7050", letterSpacing: 2 }}>Renta Fija · Mesa de Agencia · USD · MXN · EUR</div>
+              <div style={{ fontSize: 9, color: "rgba(255,255,255,0.6)", letterSpacing: 2 }}>Renta Fija · Mesa de Agencia · USD · MXN · EUR</div>
             </div>
-            <div style={{ width: 1, height: 28, background: "#dcd4c4", margin: "0 8px" }} />
-            <div style={{ fontSize: 9, color: "#8a7050" }}>
-              <span style={{ color: "#c9962a" }}>●</span>&nbsp;EN VIVO &nbsp;
-              <span style={{ color: "#f0e8d8" }}>{new Date().toLocaleString("es-MX")}</span>
+            <div style={{ width: 1, height: 28, background: "rgba(255,255,255,0.25)", margin: "0 8px" }} />
+            <div style={{ fontSize: 9, color: "rgba(255,255,255,0.6)" }}>
+              <span style={{ color: "#ffb0b0" }}>●</span>&nbsp;EN VIVO &nbsp;
+              <span style={{ color: "rgba(255,255,255,0.9)" }}>{new Date().toLocaleString("es-MX")}</span>
             </div>
           </div>
           <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
             {sesion && (
               <>
                 <div style={{ textAlign: "right" }}>
-                  <div style={{ fontSize: 11, fontWeight: 700, color: "#f0e8d8", letterSpacing: .5 }}>{sesion.nombre}</div>
+                  <div style={{ fontSize: 11, fontWeight: 700, color: "rgba(255,255,255,0.95)", letterSpacing: .5 }}>{sesion.nombre}</div>
                   <div style={{ marginTop: 2 }}><span className={`pill p-${sesion.rol}`}>{sesion.rol.toUpperCase()}</span></div>
                 </div>
                 <button className="btn-logout" onClick={logoutUsuario}>⏻ Salir</button>
-                <div style={{ width: 1, height: 24, background: "#dcd4c4" }} />
+                <div style={{ width: 1, height: 24, background: "rgba(255,255,255,0.25)" }} />
               </>
             )}
-            <button className="btn-gold" onClick={() => setMostrarForm(true)}>＋ Registrar Operación</button>
+            <button className="btn-gold" style={{ background: "#ffffff", color: "#9C0033", borderColor: "#ffffff" }} onClick={() => setMostrarForm(true)}>＋ Registrar Operación</button>
           </div>
         </div>
         <div style={{ display: "flex", gap: 0, padding: "0 24px", marginTop: 8 }}>
@@ -710,7 +709,7 @@ export default function BlotterBondsINVEX() {
         {[
           { key: "tdy", label: "TDY", sublabel: "Hoy",         color: "#1a7a3a", dimColor: "#e0f5e8" },
           { key: "mtd", label: "MTD", sublabel: "Mes en curso", color: "#1a5a9a", dimColor: "#ddeeff" },
-          { key: "ytd", label: "YTD", sublabel: "Año en curso", color: "#c9962a", dimColor: "#fff8e8" },
+          { key: "ytd", label: "YTD", sublabel: "Año en curso", color: "#9C0033", dimColor: "#fce8ee" },
         ].map(({ key, label, sublabel, color, dimColor }) => {
           const p = pnlAcumulado[key];
           return (
@@ -770,7 +769,7 @@ export default function BlotterBondsINVEX() {
 
           {seleccionadas.size > 0 && (
             <div className="bulk-bar" style={{ marginBottom: 10 }}>
-              <span style={{ fontSize: 10, fontWeight: 700, color: "#c9962a", letterSpacing: 1 }}>
+              <span style={{ fontSize: 10, fontWeight: 700, color: "#9C0033", letterSpacing: 1 }}>
                 {seleccionadas.size} OPERACIÓN{seleccionadas.size !== 1 ? "ES" : ""} SELECCIONADA{seleccionadas.size !== 1 ? "S" : ""}
               </span>
               <div style={{ width: 1, height: 16, background: "#d8ceb8", margin: "0 4px" }} />
@@ -803,7 +802,7 @@ export default function BlotterBondsINVEX() {
                     <td className="cb-cell" onClick={e => e.stopPropagation()}>
                       <input type="checkbox" checked={seleccionadas.has(t.id)} onChange={() => toggleSelec(t.id)} />
                     </td>
-                    <td className="td" style={{ color: "#c9962a", fontWeight: 700, fontSize: 10 }}>{t.id}</td>
+                    <td className="td" style={{ color: "#9C0033", fontWeight: 700, fontSize: 10 }}>{t.id}</td>
                     <td className="td" style={{ color: "#8a7050", fontSize: 10 }}>{fmtFecha(t.fecha)}</td>
                     <td className="td">
                       <div style={{ color: "#1a1200", fontWeight: 600, fontSize: 12 }}>{t.emisor}</div>
@@ -854,7 +853,7 @@ export default function BlotterBondsINVEX() {
                             {t.moneda!=="MXN"&&<div style={{ fontSize: 10, color: "#3a6040" }}>= MX${fmt(t.importeCompraMXN,0)} · TC {fmt(t.tipoCambio,4)}</div>}
                           </div>
                           <div style={{ display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", background: "#f5f2ee", border: "1px solid #d8ceb8", borderRadius: 4, gap: 3 }}>
-                            <div style={{ fontSize: 18, color: "#c9962a" }}>⇄</div>
+                            <div style={{ fontSize: 18, color: "#9C0033" }}>⇄</div>
                             <div style={{ fontSize: 11, fontWeight: 900, color: pnlColor(t.diferencial) }}>{fmtDif(t.diferencial,4)}</div>
                             <div style={{ fontSize: 9, color: "#60500a" }}>pts</div>
                           </div>
@@ -916,7 +915,7 @@ export default function BlotterBondsINVEX() {
           {/* ── P&L ACUMULADO TDY / MTD / YTD ── */}
           <div style={{ marginBottom: 20 }}>
             <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 10 }}>
-              <div style={{ fontSize: 9, fontWeight: 800, color: "#c9962a", letterSpacing: 2.5, textTransform: "uppercase" }}>P&L Acumulado</div>
+              <div style={{ fontSize: 9, fontWeight: 800, color: "#9C0033", letterSpacing: 2.5, textTransform: "uppercase" }}>P&L Acumulado</div>
               <div style={{ height: 1, flex: 1, background: "#e4ddd0" }} />
               <div style={{ fontSize: 9, color: "#8a7050", letterSpacing: 1 }}>
                 Solo operaciones vivas · <span style={{ color: "#1a5a9a" }}>{pnlAcumulado.totalVivas}</span> ops · Ref. {fmtFecha(pnlAcumulado.hoy)}
@@ -926,7 +925,7 @@ export default function BlotterBondsINVEX() {
               {[
                 { key: "tdy", label: "TDY", sublabel: "Hoy",           color: "#1a7a3a", bg: "#e0f5e8", border: "#90d4a8" },
                 { key: "mtd", label: "MTD", sublabel: "Mes en curso",   color: "#1a5a9a", bg: "#ddeeff", border: "#b0cce8" },
-                { key: "ytd", label: "YTD", sublabel: "Año en curso",   color: "#c9962a", bg: "#fff8e8", border: "#fff8e8" },
+                { key: "ytd", label: "YTD", sublabel: "Año en curso",   color: "#9C0033", bg: "#fce8ee", border: "#fce8ee" },
               ].map(({ key, label, sublabel, color, bg, border }) => {
                 const p = pnlAcumulado[key];
                 const monedas = ["USD", "MXN", "EUR"].filter(m => p.porMoneda[m]);
@@ -995,7 +994,7 @@ export default function BlotterBondsINVEX() {
               <tbody>
                 {enriquecidas.map((t,i)=>(
                   <tr key={t.id} className="fila" style={{background:i%2===0?"#f5f1eb":"#faf8f4"}}>
-                    <td className="td" style={{color:"#c9962a",fontWeight:700,fontSize:10}}>{t.id}</td>
+                    <td className="td" style={{color:"#9C0033",fontWeight:700,fontSize:10}}>{t.id}</td>
                     <td className="td" style={{color:"#8a7050",fontSize:10}}>{fmtFecha(t.fecha)}</td>
                     <td className="td" style={{color:"#1a1200",fontSize:11}}>{t.emisor}</td>
                     <td className="td"><span className={`pill p-${t.moneda.toLowerCase()}`}>{t.moneda}</span></td>
@@ -1098,7 +1097,7 @@ export default function BlotterBondsINVEX() {
           <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill,minmax(320px,1fr))", gap: 16 }}>
             {reporteOperador.map(r=>(
               <div key={r.operador} className="card" style={{padding:18,position:"relative",overflow:"hidden"}}>
-                <div style={{position:"absolute",top:0,left:0,width:4,height:"100%",background:"#c9962a",borderRadius:"4px 0 0 4px"}}/>
+                <div style={{position:"absolute",top:0,left:0,width:4,height:"100%",background:"#9C0033",borderRadius:"4px 0 0 4px"}}/>
                 <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",marginBottom:14}}>
                   <div>
                     <div style={{fontWeight:900,color:"#1a1200",fontSize:15}}>{r.operador}</div>
@@ -1120,10 +1119,10 @@ export default function BlotterBondsINVEX() {
                 <div style={{borderTop:"1px solid #e0d4b8",paddingTop:10}}>
                   {enriquecidas.filter(t=>(t.operador||"Sin asignar")===r.operador).map(t=>(
                     <div key={t.id} style={{display:"flex",justifyContent:"space-between",padding:"5px 0",borderBottom:"1px solid #e0d4b8",fontSize:10,gap:6}}>
-                      <span style={{color:"#c9962a",minWidth:70}}>{t.id}</span>
+                      <span style={{color:"#9C0033",minWidth:70}}>{t.id}</span>
                       <span style={{color:"#8a7050",flex:1,overflow:"hidden",textOverflow:"ellipsis"}}>{t.emisor}</span>
                       <span style={{color:"#1a7a3a"}}>{t.compradorCp.split(" ")[0]}</span>
-                      <span style={{color:"#c9962a"}}>→</span>
+                      <span style={{color:"#9C0033"}}>→</span>
                       <span style={{color:"#c02020"}}>{t.vendedorCp.split(" ")[0]}</span>
                       <span style={{color:pnlColor(t.pnl),fontWeight:800,minWidth:70,textAlign:"right"}}>MX${fmt(t.pnl,0)}</span>
                     </div>
@@ -1164,7 +1163,7 @@ export default function BlotterBondsINVEX() {
                         <div className="lbl" style={{marginBottom:8}}>Operaciones</div>
                         {datos.map(t=>(
                           <div key={t.id} style={{display:"flex",justifyContent:"space-between",padding:"5px 0",borderBottom:"1px solid #e0d4b8",fontSize:10,gap:6}}>
-                            <span style={{color:"#c9962a",minWidth:68}}>{t.id}</span>
+                            <span style={{color:"#9C0033",minWidth:68}}>{t.id}</span>
                             <span style={{color:"#8a7050",flex:1,overflow:"hidden",textOverflow:"ellipsis"}}>{t.emisor}</span>
                             <span style={{color:pnlColor(t.pnl),fontWeight:800}}>{fmtPnl(t.pnl,mon)}</span>
                           </div>
@@ -1228,7 +1227,7 @@ export default function BlotterBondsINVEX() {
                 <div className="lbl" style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:6}}>
                   <span>Emisora — Valmer / PIP</span>
                   {cargandoEmisoras
-                    ? <span style={{color:"#c9962a",fontSize:9,letterSpacing:1,display:"flex",alignItems:"center",gap:4}}><span style={{animation:"spin 1s linear infinite",display:"inline-block"}}>◌</span> Cargando BD…</span>
+                    ? <span style={{color:"#9C0033",fontSize:9,letterSpacing:1,display:"flex",alignItems:"center",gap:4}}><span style={{animation:"spin 1s linear infinite",display:"inline-block"}}>◌</span> Cargando BD…</span>
                     : <span style={{color:"#8a7050",fontSize:9}}>{emisoras.length.toLocaleString("es-MX")} emisoras</span>
                   }
                 </div>
@@ -1237,7 +1236,7 @@ export default function BlotterBondsINVEX() {
                 <div
                   onClick={() => { if (!cargandoEmisoras) { setDropdown(d => !d); setBusqEmisora(""); } }}
                   style={{
-                    background:"#ffffff", border:`1px solid ${dropdownAbierto?"#c9962a":"#d8ceb8"}`,
+                    background:"#ffffff", border:`1px solid ${dropdownAbierto?"#9C0033":"#d8ceb8"}`,
                     borderRadius: dropdownAbierto ? "3px 3px 0 0" : 3,
                     padding:"9px 12px", cursor:"pointer", display:"flex",
                     justifyContent:"space-between", alignItems:"center",
@@ -1248,7 +1247,7 @@ export default function BlotterBondsINVEX() {
                     const [em,se,prov] = plantillaSel.split("|");
                     return (
                       <span style={{fontSize:12,color:"#f0e4c0",fontWeight:700}}>
-                        <span style={{color:"#c9962a",marginRight:8,fontSize:9,background:"#fff8e8",border:"1px solid #e8d080",borderRadius:2,padding:"1px 5px"}}>{prov}</span>
+                        <span style={{color:"#9C0033",marginRight:8,fontSize:9,background:"#fce8ee",border:"1px solid #e8a0b8",borderRadius:2,padding:"1px 5px"}}>{prov}</span>
                         {em} · {se}
                       </span>
                     );
@@ -1260,7 +1259,7 @@ export default function BlotterBondsINVEX() {
                 {dropdownAbierto && (
                   <div style={{
                     position:"absolute", top:"100%", left:0, right:0, zIndex:200,
-                    background:"#faf8f4", border:"1px solid #fbbf24", borderTop:"none",
+                    background:"#faf8f4", border:"1px solid #c9607a", borderTop:"none",
                     borderRadius:"0 0 4px 4px", boxShadow:"0 8px 32px rgba(0,0,0,.6)",
                   }}>
 
@@ -1268,7 +1267,7 @@ export default function BlotterBondsINVEX() {
                     {emisoraElegida ? (()=>{
                       const { emisora: emNom, proveedor: prov } = emisoraElegida;
                       const isPIP    = prov === 'PIP';
-                      const provColor = isPIP ? "#c9962a" : "#1a5a9a";
+                      const provColor = isPIP ? "#9C0033" : "#1a5a9a";
                       const series = emisoras.filter(e => e.emisora === emNom && e.proveedor === prov);
                       const q      = busqEmisora.trim().toUpperCase();
                       const filtradas = q ? series.filter(e => e.serie.includes(q) || e.tv.includes(q)) : series;
@@ -1397,7 +1396,7 @@ export default function BlotterBondsINVEX() {
                                 }}>{e.tv}</span>
                                 <span style={{color:"#1a1200",fontWeight:700,fontSize:12,flex:1,letterSpacing:.5}}>
                                   {q ? e.emisora.split("").map((ch,i) => (
-                                    <span key={i} style={e.emisora.slice(i,i+q.length)===q?{color:"#c9962a"}:{}}>{ch}</span>
+                                    <span key={i} style={e.emisora.slice(i,i+q.length)===q?{color:"#9C0033"}:{}}>{ch}</span>
                                   )) : e.emisora}
                                 </span>
                                 <span style={{color:"#8a7050",fontSize:10}}>{seriesCount} series ›</span>
@@ -1438,7 +1437,7 @@ export default function BlotterBondsINVEX() {
                               ? <div style={{padding:"20px",textAlign:"center",color:"#8a7050",fontSize:11}}>Sin resultados</div>
                               : <>
                                   {renderGrupo(valmer,"Valmer","#1a5a9a","#eef4fa","#c8daf0")}
-                                  {renderGrupo(pip,"PIP","#c9962a","#fff8e8","#fff8e8")}
+                                  {renderGrupo(pip,"PIP","#9C0033","#fce8ee","#fce8ee")}
                                   <div style={{padding:"6px 12px",fontSize:8,color:"#6a5030",letterSpacing:1,borderTop:"1px solid #d8ceb8",textAlign:"center"}}>
                                     {total} emisoras · selecciona para ver series
                                   </div>
@@ -1461,7 +1460,7 @@ export default function BlotterBondsINVEX() {
               </div>
               <hr className="hr" style={{marginBottom:18}}/>
 
-              <div style={{fontSize:9,color:"#c9962a",letterSpacing:2,textTransform:"uppercase",marginBottom:10}}>Datos del Bono</div>
+              <div style={{fontSize:9,color:"#9C0033",letterSpacing:2,textTransform:"uppercase",marginBottom:10}}>Datos del Bono</div>
               <div className="g3" style={{marginBottom:12}}>
                 <div><div className="lbl">Fecha de Operación</div><input type="date" value={form.fecha} onChange={e=>sF("fecha",e.target.value)}/></div>
                 <div>
@@ -1574,7 +1573,7 @@ export default function BlotterBondsINVEX() {
 
                     {/* Hint on missing fields */}
                     {(!form.cupon || !form.vencimiento || !form.valorNominal) && (
-                      <div style={{fontSize:9,color:"#c9962a",marginBottom:10,letterSpacing:.5}}>
+                      <div style={{fontSize:9,color:"#9C0033",marginBottom:10,letterSpacing:.5}}>
                         ⚠ Completa: {[!form.cupon&&"Cupón", !form.vencimiento&&"Vencimiento", !form.valorNominal&&"Valor Nominal"].filter(Boolean).join(", ")}
                       </div>
                     )}
@@ -1584,7 +1583,7 @@ export default function BlotterBondsINVEX() {
                       <div style={{borderTop:"1px solid #1a2a1a", paddingTop:14}}>
                         <div style={{display:"grid", gridTemplateColumns:"1fr 1fr 1fr", gap:10, marginBottom:12}}>
                           {[
-                            { lbl:"Precio Limpio",       val: calcRes.precioLimpio,     color:"#c9962a", bold:true },
+                            { lbl:"Precio Limpio",       val: calcRes.precioLimpio,     color:"#9C0033", bold:true },
                             { lbl:"Interés Devengado",   val: calcRes.interesDevengado, color:"#1a5a9a" },
                             { lbl:"Precio Sucio",        val: calcRes.precioSucio,      color:"#1a7a3a" },
                           ].map(({ lbl, val, color, bold }) => (
@@ -1600,7 +1599,7 @@ export default function BlotterBondsINVEX() {
                           <button
                             type="button"
                             onClick={() => { sF("pxCompra", calcRes.precioLimpio.toFixed(6)); sF("pxVenta", calcRes.precioLimpio.toFixed(6)); }}
-                            style={{flex:1, padding:"7px 0", background:"#f0f8e8", border:"1px solid #fbbf24", borderRadius:3, color:"#c9962a", fontSize:10, fontWeight:700, cursor:"pointer", letterSpacing:1}}
+                            style={{flex:1, padding:"7px 0", background:"#fee8ee", border:"1px solid #c9607a", borderRadius:3, color:"#9C0033", fontSize:10, fontWeight:700, cursor:"pointer", letterSpacing:1}}
                           >↗ USAR PRECIO LIMPIO → Px Compra &amp; Venta</button>
                           <button
                             type="button"
@@ -1633,7 +1632,7 @@ export default function BlotterBondsINVEX() {
               </div>
               <hr className="hr" style={{marginBottom:18}}/>
 
-              <div style={{fontSize:9,color:"#c9962a",letterSpacing:2,textTransform:"uppercase",marginBottom:12}}>Precios de Agencia</div>
+              <div style={{fontSize:9,color:"#9C0033",letterSpacing:2,textTransform:"uppercase",marginBottom:12}}>Precios de Agencia</div>
               <div style={{display:"grid",gridTemplateColumns:"1fr 70px 1fr",marginBottom:18}}>
                 <div style={{background:"#f0faf4",border:"1px solid #143020",borderRadius:"4px 0 0 4px",padding:16}}>
                   <div style={{fontSize:9,color:"#1a7a3a",letterSpacing:2,fontWeight:800,textTransform:"uppercase",marginBottom:12,display:"flex",gap:6,alignItems:"center"}}>
@@ -1659,12 +1658,12 @@ export default function BlotterBondsINVEX() {
                   </div>
                 </div>
                 <div style={{display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",background:"#f5f2ee",borderTop:"1px solid #d8ceb8",borderBottom:"1px solid #d8ceb8",gap:4}}>
-                  <div style={{fontSize:20,color:"#c9962a"}}>⇒</div>
+                  <div style={{fontSize:20,color:"#9C0033"}}>⇒</div>
                   {form.pxCompra&&form.pxVenta&&(()=>{
                     const dif=parseFloat(form.pxCompra)-parseFloat(form.pxVenta);
                     const pos=dif>=0;
                     return(
-                      <div style={{fontSize:11,fontWeight:900,color:pos?"#c9962a":"#c02020",textAlign:"center",lineHeight:1.3}}>
+                      <div style={{fontSize:11,fontWeight:900,color:pos?"#9C0033":"#c02020",textAlign:"center",lineHeight:1.3}}>
                         {pos?"+":""}{fmt(dif,3)}<br/>
                         <span style={{fontSize:9,color:pos?"rgba(251,191,36,.5)":"rgba(248,113,113,.5)"}}>pts</span>
                       </div>
@@ -1707,7 +1706,7 @@ export default function BlotterBondsINVEX() {
                   <div style={{background:pos?"#f0fff8":"#fff0f0",border:`1px solid ${pos?"#a0d8b8":"#e8b0b0"}`,borderRadius:4,padding:"12px 18px",marginBottom:18}}>
                     <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:8}}>
                       <span style={{fontSize:9,color:pos?"#1a7a3a":"#c02020",letterSpacing:2,textTransform:"uppercase"}}>Vista Previa — {pos?"Ingreso":"Pérdida"} de Agencia</span>
-                      <span style={{fontSize:10,color:"#c9962a"}}>Diferencial: {pos?"+":""}{fmt(dif,4)} pts · {pos?"+":""}{fmt(dif*100,2)} bps</span>
+                      <span style={{fontSize:10,color:"#9C0033"}}>Diferencial: {pos?"+":""}{fmt(dif,4)} pts · {pos?"+":""}{fmt(dif*100,2)} bps</span>
                     </div>
                     <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:12}}>
                       <div><div style={{fontSize:9,color:"#8a7050",letterSpacing:1.5,textTransform:"uppercase",marginBottom:3}}>Importe Compra</div>
@@ -1844,7 +1843,7 @@ function GestionLista({ titulo, icono, color, bg, border, items, setItems, place
         <button
           onClick={agregar}
           disabled={!nuevo.trim() || items.includes(nuevo.trim())}
-          style={{ background: nuevo.trim() && !items.includes(nuevo.trim()) ? "#fff8e8" : "#ffffff", border: `1px solid ${nuevo.trim() && !items.includes(nuevo.trim()) ? color : "#d8ceb8"}`, color: nuevo.trim() && !items.includes(nuevo.trim()) ? color : "#8a7050", borderRadius: 3, padding: "7px 16px", cursor: "pointer", fontSize: 10, fontFamily: "inherit", fontWeight: 700, letterSpacing: 1, transition: "all .15s", whiteSpace: "nowrap" }}
+          style={{ background: nuevo.trim() && !items.includes(nuevo.trim()) ? "#fce8ee" : "#ffffff", border: `1px solid ${nuevo.trim() && !items.includes(nuevo.trim()) ? color : "#d8ceb8"}`, color: nuevo.trim() && !items.includes(nuevo.trim()) ? color : "#8a7050", borderRadius: 3, padding: "7px 16px", cursor: "pointer", fontSize: 10, fontFamily: "inherit", fontWeight: 700, letterSpacing: 1, transition: "all .15s", whiteSpace: "nowrap" }}
         >＋ Agregar</button>
       </div>
     </div>
@@ -1927,7 +1926,7 @@ function GestionUsuarios({ usuarios, setUsuarios, sesionId }) {
         <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
           <span style={{ fontSize: 18 }}>🔐</span>
           <div>
-            <div style={{ fontSize: 12, fontWeight: 800, color: "#c9962a", letterSpacing: 1.5 }}>GESTIÓN DE USUARIOS</div>
+            <div style={{ fontSize: 12, fontWeight: 800, color: "#9C0033", letterSpacing: 1.5 }}>GESTIÓN DE USUARIOS</div>
             <div style={{ fontSize: 9, color: "#8a7050", marginTop: 1 }}>{usuarios.length} usuario{usuarios.length !== 1 ? "s" : ""} registrado{usuarios.length !== 1 ? "s" : ""}</div>
           </div>
         </div>
@@ -1973,7 +1972,7 @@ function GestionUsuarios({ usuarios, setUsuarios, sesionId }) {
             <React.Fragment key={u.id}>
               <tr style={{ background: u.id === sesionId ? "#fff8ec" : undefined }}>
                 <td style={{ padding: "9px 14px", fontSize: 11, color: "#1a1200", fontWeight: 600 }}>
-                  {u.nombre} {u.id === sesionId && <span style={{ fontSize: 8, color: "#c9962a", marginLeft: 4 }}>← tú</span>}
+                  {u.nombre} {u.id === sesionId && <span style={{ fontSize: 8, color: "#9C0033", marginLeft: 4 }}>← tú</span>}
                 </td>
                 <td style={{ padding: "9px 14px", fontSize: 10, color: "#8a7050", fontFamily: "monospace" }}>{u.usuario}</td>
                 <td style={{ padding: "9px 14px" }}>
@@ -2027,7 +2026,7 @@ function GestionUsuarios({ usuarios, setUsuarios, sesionId }) {
 function AdminPanel({ contrapartes, setCp, operadores, setOps2, calificaciones, setCal, tiposVenc, setTV, monedas, setMon, cpDefault, opsDefault, calDefault, tvDefault, monDefault, usuarios, setUsuarios, sesionId }) {
   const listas = [
     { titulo: "Contrapartes",        icono: "🏦", color: "#1a5a9a", bg: "#eef4fa", border: "#b0cce8", items: contrapartes, setItems: setCp,   placeholder: "ej. BBVA Securities",    defaultItems: cpDefault  },
-    { titulo: "Operadores",          icono: "👤", color: "#c9962a", bg: "#fff8e8", border: "#fff8e8", items: operadores,   setItems: setOps2, placeholder: "ej. R. García",          defaultItems: opsDefault },
+    { titulo: "Operadores",          icono: "👤", color: "#9C0033", bg: "#fce8ee", border: "#fce8ee", items: operadores,   setItems: setOps2, placeholder: "ej. R. García",          defaultItems: opsDefault },
     { titulo: "Calificaciones",      icono: "⭐", color: "#1a7a3a", bg: "#e0f5e8", border: "#90d4a8", items: calificaciones,setItems: setCal,  placeholder: "ej. CCC+",               defaultItems: calDefault },
     { titulo: "Tipos de Vencimiento",icono: "📅", color: "#4030aa", bg: "#eeeeff", border: "#b0b0f0", items: tiposVenc,    setItems: setTV,   placeholder: "ej. Extendible",          defaultItems: tvDefault  },
     { titulo: "Monedas",             icono: "💱", color: "#c02020", bg: "#fde8e8", border: "#e8a0a0", items: monedas,      setItems: setMon,  placeholder: "ej. GBP",                defaultItems: monDefault },
@@ -2049,7 +2048,7 @@ function AdminPanel({ contrapartes, setCp, operadores, setOps2, calificaciones, 
       </div>
 
       {/* Advertencia */}
-      <div style={{ background: "#fff8e8", border: "1px solid #302810", borderRadius: 4, padding: "10px 16px", marginBottom: 20, display: "flex", alignItems: "center", gap: 10 }}>
+      <div style={{ background: "#fce8ee", border: "1px solid #5a0018", borderRadius: 4, padding: "10px 16px", marginBottom: 20, display: "flex", alignItems: "center", gap: 10 }}>
         <span style={{ fontSize: 16 }}>⚠️</span>
         <span style={{ fontSize: 10, color: "#b06010", letterSpacing: .5 }}>
           Los cambios aplican inmediatamente en todos los formularios del blotter. Eliminar una contraparte u operador no afecta tickets ya registrados.
