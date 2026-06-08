@@ -11,11 +11,14 @@ export default async function handler(req, res) {
     const se    = serie.toUpperCase().trim();
     const dias_ = parseInt(dias, 10) || 0;
 
+    // dias=0 means MAX — cap at 730 days (2 years) to avoid Vercel timeout
+    const diasEfectivos = dias_ === 0 ? 730 : dias_;
+
     const makeReq = (db) => {
       const r = db.request();
       r.input('em',   sql.NVarChar, em);
       r.input('se',   sql.NVarChar, se);
-      r.input('dias', sql.Int,      dias_);
+      r.input('dias', sql.Int,      diasEfectivos);
       return r;
     };
 
@@ -27,7 +30,7 @@ export default async function handler(req, res) {
                CAST(PrecioLimpio AS FLOAT) AS precioLimpio
         FROM vector_precios_gubernamental WITH (NOLOCK)
         WHERE UPPER(TRIM(Emisora))=@em AND UPPER(TRIM(Serie))=@se
-          AND (@dias=0 OR Fecha>=DATEADD(day,-@dias,GETDATE()))
+          AND Fecha>=DATEADD(day,-@dias,GETDATE())
         ORDER BY Fecha ASC`)),
       queryWithRetry(db => makeReq(db).query(`
         SELECT CONVERT(varchar(10), fecha, 23) AS fecha,
@@ -36,7 +39,7 @@ export default async function handler(req, res) {
                CAST(precio_limpio AS FLOAT) AS precioLimpio
         FROM vector_precios_gubernamental_pip WITH (NOLOCK)
         WHERE UPPER(TRIM(emisora))=@em AND UPPER(TRIM(serie))=@se
-          AND (@dias=0 OR fecha>=DATEADD(day,-@dias,GETDATE()))
+          AND fecha>=DATEADD(day,-@dias,GETDATE())
         ORDER BY fecha ASC`)),
     ]);
 
