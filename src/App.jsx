@@ -799,7 +799,7 @@ export default function BlotterBondsINVEX() {
                       title="Seleccionar todas"
                     />
                   </th>
-                  {[["id","ID"],["fecha","Fecha"],["emisor","Bono"],["tipo","Tipo"],["calificacion","Cal."],["moneda","Mon."],["titulos","Títulos"],["valorNominal","V.N."],["nominal","Nominal"],["compradorCp","Comprador"],["pxCompra","Px.S. Cpa"],["importeCompraMXN","Imp.Cpa MXN"],["vendedorCp","Vendedor"],["pxVenta","Px.S. Vta"],["importeVentaMXN","Imp.Vta MXN"],["diferencial","Dif.pts"],["pnl","P&L MXN"],["operador","Operador"],["estatus","Estatus"]].map(([c,l]) => (
+                  {[["id","ID"],["fecha","Fecha"],["emisor","Bono"],["moneda","Mon."],["titulos","Títulos"],["valorNominal","V.N."],["compradorCp","Comprador"],["pxCompra","Px.S. Cpa"],["importeCompraMXN","Imp.Cpa MXN"],["vendedorCp","Vendedor"],["pxVenta","Px.S. Vta"],["importeVentaMXN","Imp.Vta MXN"],["diferencial","Dif.pts"],["pnl","P&L MXN"],["operador","Operador"],["estatus","Estatus"]].map(([c,l]) => (
                     <th key={c} className="th" onClick={() => ordenar(c)}>{l} <SI col={c}/></th>
                   ))}
                 </tr>
@@ -817,15 +817,10 @@ export default function BlotterBondsINVEX() {
                       <div style={{ color: "#1a1200", fontWeight: 600, fontSize: 12 }}>{t.emisor}</div>
                       <div style={{ color: "#8a7050", fontSize: 9, marginTop: 1 }}>{t.isin}</div>
                     </td>
-                    <td className="td"><span className={`pill p-${t.tipo==="Gubernamental"?"gub":"corp"}`}>{t.tipo==="Gubernamental"?"GUB":"CORP"}</span></td>
-                    <td className="td" style={{ fontWeight: 700, fontSize: 11, color: colorCalif(t.calificacion) }}>{t.calificacion}</td>
                     <td className="td"><span className={`pill p-${t.moneda.toLowerCase()}`}>{t.moneda}</span></td>
-                    {/* Títulos, Valor Nominal, Nominal Total */}
+                    {/* Títulos, Valor Nominal */}
                     <td className="td" style={{ textAlign: "right", color: "#1a1200", fontWeight: 700 }}>{t.titulos ? Number(t.titulos).toLocaleString("es-MX") : "-"}</td>
                     <td className="td" style={{ textAlign: "right", color: "#8a7050" }}>{t.valorNominal ? fmt(t.valorNominal, 0) : "-"}</td>
-                    <td className="td" style={{ textAlign: "right", color: "#6a5a3a", fontWeight: 700, background: "#faf8f4", borderLeft: "1px solid #0f1820" }}>
-                      {t.nominal ? fmtMon(t.nominal, t.moneda) : "-"}
-                    </td>
                     {/* Compra */}
                     <td className="td">
                       <div style={{ color: "#1a7a3a", fontWeight: 600, fontSize: 11 }}>{t.compradorCp}</div>
@@ -852,7 +847,7 @@ export default function BlotterBondsINVEX() {
                   </tr>
                   {filaExp === t.id && (
                     <tr key={t.id+"-x"} style={{ background: "#f5f0e8" }}>
-                      <td colSpan={20} style={{ padding: "14px 16px 16px" }}>
+                      <td colSpan={17} style={{ padding: "14px 16px 16px" }}>
                         <div style={{ display: "grid", gridTemplateColumns: "1fr 70px 1fr 1fr", gap: 12 }}>
                           <div style={{ background: "#f0faf4", border: "1px solid #143020", borderRadius: 4, padding: 14 }}>
                             <div className="lbl" style={{ color: "#1a7a3a", marginBottom: 8 }}>▲ Comprador — Paga al Desk</div>
