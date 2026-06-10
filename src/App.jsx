@@ -135,8 +135,10 @@ export default function BlotterBondsINVEX() {
     titulos: op.titulos, valor_nominal: op.valorNominal,
     tipo_cambio: op.tipoCambio || 1, comprador_cp: op.compradorCp || null,
     px_compra: op.pxCompra, tasa_compra: op.tasaCompra != null && op.tasaCompra !== '' ? Number(op.tasaCompra) : null,
+    traders_compra: op.tradersCompra && op.tradersCompra.length ? op.tradersCompra : null,
     vendedor_cp: op.vendedorCp || null,
     px_venta: op.pxVenta, tasa_venta: op.tasaVenta != null && op.tasaVenta !== '' ? Number(op.tasaVenta) : null,
+    traders_venta: op.tradersVenta && op.tradersVenta.length ? op.tradersVenta : null,
     operador: op.operador || null,
     estatus: op.estatus || 'Booked', notas: op.notas || null,
   });
@@ -149,8 +151,10 @@ export default function BlotterBondsINVEX() {
     titulos: Number(row.titulos), valorNominal: Number(row.valor_nominal),
     tipoCambio: Number(row.tipo_cambio || 1), compradorCp: row.comprador_cp,
     pxCompra: Number(row.px_compra), tasaCompra: row.tasa_compra != null ? Number(row.tasa_compra) : null,
+    tradersCompra: row.traders_compra || [],
     vendedorCp: row.vendedor_cp,
     pxVenta: Number(row.px_venta), tasaVenta: row.tasa_venta != null ? Number(row.tasa_venta) : null,
+    tradersVenta: row.traders_venta || [],
     operador: row.operador,
     estatus: row.estatus, notas: row.notas,
   });
@@ -309,9 +313,54 @@ export default function BlotterBondsINVEX() {
     } catch { return null; }
   };
 
-  const formVacio = { fecha: new Date().toISOString().slice(0, 10), fechaValor: "T+1", emisor: "", isin: "", tipo: "Gubernamental", cupon: "", vencimiento: "", tipoVenc: "Bullet", calificacion: "A", moneda: "MXN", titulos: "", valorNominal: "100", tipoCambio: "1", compradorCp: "", pxCompra: "", tasaCompra: "", vendedorCp: "", pxVenta: "", tasaVenta: "", operador: "", estatus: "Booked" };
+  const formVacio = { fecha: new Date().toISOString().slice(0, 10), fechaValor: "T+1", emisor: "", isin: "", tipo: "Gubernamental", cupon: "", vencimiento: "", tipoVenc: "Bullet", calificacion: "A", moneda: "MXN", titulos: "", valorNominal: "100", tipoCambio: "1", compradorCp: "", pxCompra: "", tasaCompra: "", tradersCompra: [{ nombre: "", titulos: "" }], vendedorCp: "", pxVenta: "", tasaVenta: "", tradersVenta: [{ nombre: "", titulos: "" }], operador: "", estatus: "Booked" };
   const [form, setForm] = useState(formVacio);
   const sF = (k, v) => setForm(f => ({ ...f, [k]: v }));
+
+  // ── TRADERS POR LEG (asignación por títulos) ─────────────────────────────
+  const setTrader    = (leg, i, k, v) => setForm(f => ({ ...f, [leg]: f[leg].map((r, j) => j === i ? { ...r, [k]: v } : r) }));
+  const agregarTrader = (leg) => setForm(f => ({ ...f, [leg]: [...f[leg], { nombre: "", titulos: "" }] }));
+  const quitarTrader  = (leg, i) => setForm(f => ({ ...f, [leg]: f[leg].length > 1 ? f[leg].filter((_, j) => j !== i) : [{ nombre: "", titulos: "" }] }));
+  // Un solo trader con títulos vacío = se le asigna toda la operación
+  const limpiarTraders = (lista, totalTitulos) => {
+    const rows = (lista || []).filter(r => r.nombre);
+    if (rows.length === 1 && (rows[0].titulos === "" || rows[0].titulos == null)) return [{ nombre: rows[0].nombre, titulos: totalTitulos }];
+    return rows.map(r => ({ nombre: r.nombre, titulos: parseFloat(r.titulos) || 0 }));
+  };
+  const errorTraders = (lista, totalTitulos) => {
+    const rows = (lista || []).filter(r => r.nombre);
+    if (!rows.length) return null;
+    if (rows.length === 1 && (rows[0].titulos === "" || rows[0].titulos == null)) return null;
+    const suma = rows.reduce((s, r) => s + (parseFloat(r.titulos) || 0), 0);
+    if (!totalTitulos) return "Captura primero los títulos de la operación";
+    if (Math.abs(suma - totalTitulos) > 0.001) return `Asignados ${suma.toLocaleString("es-MX")} de ${Number(totalTitulos).toLocaleString("es-MX")} títulos`;
+    return null;
+  };
+  const renderTradersLeg = (leg, accent) => {
+    const lista = form[leg];
+    const tit = parseFloat(form.titulos) || 0;
+    const err = errorTraders(lista, tit);
+    const rows = lista.filter(r => r.nombre);
+    const unico = rows.length === 1 && (rows[0].titulos === "" || rows[0].titulos == null);
+    return (
+      <div style={{marginTop:10}}>
+        <div className="lbl">Traders del Leg (títulos asignados)</div>
+        {lista.map((r,i)=>(
+          <div key={i} style={{display:"flex",gap:6,marginBottom:6}}>
+            <select value={r.nombre} onChange={e=>setTrader(leg,i,"nombre",e.target.value)} style={{borderColor:accent,flex:1.4}}>
+              <option value="">Trader…</option>
+              {operadores.map(o=><option key={o}>{o}</option>)}
+            </select>
+            <input type="number" placeholder={lista.length===1?"todos":"títulos"} value={r.titulos} onChange={e=>setTrader(leg,i,"titulos",e.target.value)} style={{borderColor:accent,flex:1}}/>
+            <button onClick={()=>quitarTrader(leg,i)} title="Quitar trader" style={{background:"none",border:"1px solid #d8ceb8",borderRadius:3,cursor:"pointer",color:"#8a7050",padding:"0 8px",fontFamily:"inherit"}}>✕</button>
+          </div>
+        ))}
+        <button onClick={()=>agregarTrader(leg)} style={{background:"none",border:`1px dashed ${accent}`,borderRadius:3,cursor:"pointer",color:"#8a7050",fontSize:10,padding:"4px 10px",fontFamily:"inherit",width:"100%"}}>＋ agregar trader</button>
+        {err ? <div style={{fontSize:9,color:"#c02020",marginTop:4}}>⚠ {err}</div>
+             : unico ? <div style={{fontSize:9,color:"#8a7050",marginTop:4}}>Se asigna el 100% ({tit?tit.toLocaleString("es-MX"):"—"} títulos)</div> : null}
+      </div>
+    );
+  };
 
   // Carga emisoras desde la BD al montar
   useEffect(() => {
@@ -363,10 +412,14 @@ export default function BlotterBondsINVEX() {
 
   const registrarOp = async () => {
     if (!form.emisor || !form.titulos || !form.valorNominal || !form.pxCompra || !form.pxVenta || !form.compradorCp || !form.vendedorCp) return;
+    const tit = parseFloat(form.titulos);
+    if (errorTraders(form.tradersCompra, tit) || errorTraders(form.tradersVenta, tit)) return;
+    const tradersCompra = limpiarTraders(form.tradersCompra, tit);
+    const tradersVenta  = limpiarTraders(form.tradersVenta, tit);
     const newOp = {
       ...form,
       id:                genId(),
-      titulos:           parseFloat(form.titulos),
+      titulos:           tit,
       valorNominal:      parseFloat(form.valorNominal),
       tipoCambio:        parseFloat(form.tipoCambio) || 1,
       pxCompra:          parseFloat(form.pxCompra),
@@ -374,6 +427,8 @@ export default function BlotterBondsINVEX() {
       cupon:             parseFloat(form.cupon),
       tasaCompra:        form.tasaCompra !== "" && form.tasaCompra != null ? parseFloat(form.tasaCompra) : null,
       tasaVenta:         form.tasaVenta !== "" && form.tasaVenta != null ? parseFloat(form.tasaVenta) : null,
+      tradersCompra, tradersVenta,
+      operador:          [...new Set([...tradersCompra, ...tradersVenta].map(r => r.nombre))].join(", ") || form.operador || "",
       fechaLiquidacion:  calcFechaLiquidacion(form.fecha, form.fechaValor),
       estatus:           "Booked",
     };
@@ -384,7 +439,10 @@ export default function BlotterBondsINVEX() {
 
   const abrirCorreccion = (ticket) => {
     setModoCorr(ticket);
-    setForm({ ...ticket, pxCompra: String(ticket.pxCompra), pxVenta: String(ticket.pxVenta), titulos: String(ticket.titulos || ""), valorNominal: String(ticket.valorNominal || 100), tipoCambio: String(ticket.tipoCambio || 1), cupon: String(ticket.cupon), tasaCompra: ticket.tasaCompra != null ? String(ticket.tasaCompra) : "", tasaVenta: ticket.tasaVenta != null ? String(ticket.tasaVenta) : "", estatus: "Booked/Corregido" });
+    setForm({ ...ticket, pxCompra: String(ticket.pxCompra), pxVenta: String(ticket.pxVenta), titulos: String(ticket.titulos || ""), valorNominal: String(ticket.valorNominal || 100), tipoCambio: String(ticket.tipoCambio || 1), cupon: String(ticket.cupon), tasaCompra: ticket.tasaCompra != null ? String(ticket.tasaCompra) : "", tasaVenta: ticket.tasaVenta != null ? String(ticket.tasaVenta) : "",
+      tradersCompra: ticket.tradersCompra && ticket.tradersCompra.length ? ticket.tradersCompra.map(r => ({ nombre: r.nombre, titulos: String(r.titulos) })) : [{ nombre: "", titulos: "" }],
+      tradersVenta:  ticket.tradersVenta  && ticket.tradersVenta.length  ? ticket.tradersVenta.map(r => ({ nombre: r.nombre, titulos: String(r.titulos) }))  : [{ nombre: "", titulos: "" }],
+      estatus: "Booked/Corregido" });
     setPlantillaSel("");
     setMostrarForm(true);
     setFilaExp(null);
@@ -392,8 +450,12 @@ export default function BlotterBondsINVEX() {
 
   const confirmarCorreccion = async () => {
     if (!form.emisor || !form.titulos || !form.valorNominal || !form.pxCompra || !form.pxVenta || !form.compradorCp || !form.vendedorCp) return;
+    const tit = parseFloat(form.titulos);
+    if (errorTraders(form.tradersCompra, tit) || errorTraders(form.tradersVenta, tit)) return;
+    const tradersCompra = limpiarTraders(form.tradersCompra, tit);
+    const tradersVenta  = limpiarTraders(form.tradersVenta, tit);
     const updatedOp = { ...form, id: modoCorreccion.id,
-      titulos:           parseFloat(form.titulos),
+      titulos:           tit,
       valorNominal:      parseFloat(form.valorNominal),
       tipoCambio:        parseFloat(form.tipoCambio) || 1,
       pxCompra:          parseFloat(form.pxCompra),
@@ -401,6 +463,8 @@ export default function BlotterBondsINVEX() {
       cupon:             parseFloat(form.cupon),
       tasaCompra:        form.tasaCompra !== "" && form.tasaCompra != null ? parseFloat(form.tasaCompra) : null,
       tasaVenta:         form.tasaVenta !== "" && form.tasaVenta != null ? parseFloat(form.tasaVenta) : null,
+      tradersCompra, tradersVenta,
+      operador:          [...new Set([...tradersCompra, ...tradersVenta].map(r => r.nombre))].join(", ") || form.operador || "",
       fechaLiquidacion:  calcFechaLiquidacion(form.fecha, form.fechaValor),
       estatus:           "Booked/Corregido",
     };
@@ -508,12 +572,37 @@ export default function BlotterBondsINVEX() {
     return Object.values(mapa).sort((a, b) => (b.nomCompra + b.nomVenta) - (a.nomCompra + a.nomVenta));
   }, [enriquecidas]);
 
+  // Peso de un trader en una operación: cada leg (compra/venta) vale 50% del P&L,
+  // repartido dentro del leg en proporción a los títulos asignados.
+  // Trades sin asignación por legs caen 100% al campo legacy `operador`.
+  const pesoTrader = (t, nombre) => {
+    const tc = t.tradersCompra || [], tv = t.tradersVenta || [];
+    if (!tc.length && !tv.length) return (t.operador || "Sin asignar") === nombre ? 1 : 0;
+    const legW = (lista) => {
+      const tot = lista.reduce((s, r) => s + (Number(r.titulos) || 0), 0);
+      if (!lista.length || !tot) return nombre === "Sin asignar" ? 0.5 : 0;
+      const r = lista.find(x => x.nombre === nombre);
+      return r ? 0.5 * (Number(r.titulos) || 0) / tot : 0;
+    };
+    return legW(tc) + legW(tv);
+  };
+
   const reporteOperador = useMemo(() => {
     const mapa = {};
+    const add = (k, w, t) => {
+      if (!mapa[k]) mapa[k] = { operador: k, ops: 0, opIds: new Set(), nominal: 0, pnl: 0, totalDif: 0, peso: 0 };
+      const m = mapa[k];
+      if (!m.opIds.has(t.id)) { m.opIds.add(t.id); m.ops++; }
+      m.nominal += t.nominal * w; m.pnl += t.pnl * w; m.totalDif += t.diferencial * w; m.peso += w;
+    };
     enriquecidas.forEach(t => {
-      const k = t.operador || "Sin asignar";
-      if (!mapa[k]) mapa[k] = { operador: k, ops: 0, nominal: 0, pnl: 0, totalDif: 0 };
-      mapa[k].ops++; mapa[k].nominal += t.nominal; mapa[k].pnl += t.pnl; mapa[k].totalDif += t.diferencial;
+      const tc = t.tradersCompra || [], tv = t.tradersVenta || [];
+      if (!tc.length && !tv.length) { add(t.operador || "Sin asignar", 1, t); return; }
+      [tc, tv].forEach(lista => {
+        const tot = lista.reduce((s, r) => s + (Number(r.titulos) || 0), 0);
+        if (!lista.length || !tot) { add("Sin asignar", 0.5, t); return; }
+        lista.forEach(r => add(r.nombre, 0.5 * (Number(r.titulos) || 0) / tot, t));
+      });
     });
     return Object.values(mapa).sort((a, b) => b.pnl - a.pnl);
   }, [enriquecidas]);
@@ -840,7 +929,14 @@ export default function BlotterBondsINVEX() {
                       <span style={{ color: pnlColor(t.diferencial), fontWeight: 800, background: t.diferencial>=0?"#f4fff0":"#fff4f4", border: `1px solid ${t.diferencial>=0?"#a0d898":"#e8a8a8"}`, borderRadius: 3, padding: "2px 7px", fontSize: 11 }}>{fmtDif(t.diferencial,4)}</span>
                     </td>
                     <td className="td" style={{ textAlign: "right", fontWeight: 900, fontSize: 13, color: pnlColor(t.pnl) }}>MX${fmt(t.pnl,0)}</td>
-                    <td className="td" style={{ color: "#8a7050", fontSize: 10 }}>{t.operador}</td>
+                    <td className="td" style={{ color: "#8a7050", fontSize: 10 }}>
+                      {(t.tradersCompra?.length || t.tradersVenta?.length) ? (
+                        <>
+                          {t.tradersCompra?.length > 0 && <div style={{ color: "#1a7a3a" }}>C: {t.tradersCompra.map(r=>r.nombre).join(", ")}</div>}
+                          {t.tradersVenta?.length > 0 && <div style={{ color: "#c02020" }}>V: {t.tradersVenta.map(r=>r.nombre).join(", ")}</div>}
+                        </>
+                      ) : t.operador}
+                    </td>
                     <td className="td">
                       <span className={`pill ${statusClass(t.estatus)}`}>{t.estatus}</span>
                     </td>
@@ -855,6 +951,11 @@ export default function BlotterBondsINVEX() {
                             <div style={{ fontSize: 20, fontWeight: 900, color: "#1a7a3a", margin: "4px 0 2px" }}>{fmt(t.pxCompra,4)} <span style={{fontSize:10,color:"#3a6040"}}>px sucio</span></div>
                             <div style={{ fontSize: 11, color: "#1a7a3a", fontWeight: 700 }}>Importe: {fmtMon(t.importeCompra, t.moneda)}</div>
                             {t.moneda!=="MXN"&&<div style={{ fontSize: 10, color: "#3a6040" }}>= MX${fmt(t.importeCompraMXN,0)} · TC {fmt(t.tipoCambio,4)}</div>}
+                            {t.tradersCompra?.length > 0 && (
+                              <div style={{ marginTop: 8, paddingTop: 8, borderTop: "1px solid #c8e0d0", fontSize: 10, color: "#3a6040" }}>
+                                {t.tradersCompra.map(r => <div key={r.nombre}>👤 {r.nombre}: {Number(r.titulos).toLocaleString("es-MX")} títulos ({fmt(Number(r.titulos)/t.titulos*100,0)}%)</div>)}
+                              </div>
+                            )}
                           </div>
                           <div style={{ display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", background: "#f5f2ee", border: "1px solid #d8ceb8", borderRadius: 4, gap: 3 }}>
                             <div style={{ fontSize: 18, color: "#9C0033" }}>⇄</div>
@@ -867,6 +968,11 @@ export default function BlotterBondsINVEX() {
                             <div style={{ fontSize: 20, fontWeight: 900, color: "#c02020", margin: "4px 0 2px" }}>{fmt(t.pxVenta,4)} <span style={{fontSize:10,color:"#603040"}}>px sucio</span></div>
                             <div style={{ fontSize: 11, color: "#c02020", fontWeight: 700 }}>Importe: {fmtMon(t.importeVenta, t.moneda)}</div>
                             {t.moneda!=="MXN"&&<div style={{ fontSize: 10, color: "#603040" }}>= MX${fmt(t.importeVentaMXN,0)} · TC {fmt(t.tipoCambio,4)}</div>}
+                            {t.tradersVenta?.length > 0 && (
+                              <div style={{ marginTop: 8, paddingTop: 8, borderTop: "1px solid #ecd0d0", fontSize: 10, color: "#603040" }}>
+                                {t.tradersVenta.map(r => <div key={r.nombre}>👤 {r.nombre}: {Number(r.titulos).toLocaleString("es-MX")} títulos ({fmt(Number(r.titulos)/t.titulos*100,0)}%)</div>)}
+                              </div>
+                            )}
                           </div>
                           <div style={{ background: "#f5fff8", border: "1px solid #b8dcc8", borderRadius: 4, padding: 14 }}>
                             <div className="lbl" style={{ color: pnlColor(t.pnl), marginBottom: 8 }}>{t.pnl >= 0 ? "Ingreso" : "Pérdida"} de Agencia (MXN)</div>
@@ -1113,7 +1219,7 @@ export default function BlotterBondsINVEX() {
                   </div>
                 </div>
                 <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:8,marginBottom:12}}>
-                  {[["Nominal",fmtMon(r.nominal)],["P&L Promedio",fmtPnl(r.pnl/r.ops)],["Dif. Promedio",fmtDif(r.totalDif/r.ops)+" pts"]].map(([l,v])=>(
+                  {[["Nominal",fmtMon(r.nominal)],["P&L Promedio",fmtPnl(r.pnl/r.ops)],["Dif. Promedio",fmtDif(r.totalDif/(r.peso||r.ops))+" pts"]].map(([l,v])=>(
                     <div key={l} className="card" style={{padding:"8px 10px"}}>
                       <div className="lbl">{l}</div>
                       <div style={{fontSize:11,fontWeight:700,color:"#1a1200"}}>{v}</div>
@@ -1121,16 +1227,19 @@ export default function BlotterBondsINVEX() {
                   ))}
                 </div>
                 <div style={{borderTop:"1px solid #e0d4b8",paddingTop:10}}>
-                  {enriquecidas.filter(t=>(t.operador||"Sin asignar")===r.operador).map(t=>(
+                  {enriquecidas.filter(t=>pesoTrader(t,r.operador)>0).map(t=>{
+                    const w = pesoTrader(t,r.operador);
+                    return (
                     <div key={t.id} style={{display:"flex",justifyContent:"space-between",padding:"5px 0",borderBottom:"1px solid #e0d4b8",fontSize:10,gap:6}}>
                       <span style={{color:"#9C0033",minWidth:70}}>{t.id}</span>
                       <span style={{color:"#8a7050",flex:1,overflow:"hidden",textOverflow:"ellipsis"}}>{t.emisor}</span>
                       <span style={{color:"#1a7a3a"}}>{t.compradorCp.split(" ")[0]}</span>
                       <span style={{color:"#9C0033"}}>→</span>
                       <span style={{color:"#c02020"}}>{t.vendedorCp.split(" ")[0]}</span>
-                      <span style={{color:pnlColor(t.pnl),fontWeight:800,minWidth:70,textAlign:"right"}}>MX${fmt(t.pnl,0)}</span>
+                      {w<1&&<span style={{color:"#8a7050",minWidth:32,textAlign:"right"}}>{fmt(w*100,0)}%</span>}
+                      <span style={{color:pnlColor(t.pnl*w),fontWeight:800,minWidth:70,textAlign:"right"}}>MX${fmt(t.pnl*w,0)}</span>
                     </div>
-                  ))}
+                  );})}
                 </div>
               </div>
             ))}
@@ -1664,6 +1773,7 @@ export default function BlotterBondsINVEX() {
                     <div className="lbl">Tasa Dealt Compra (%)</div>
                     <input type="number" step="0.001" placeholder="9.250" value={form.tasaCompra} onChange={e=>sF("tasaCompra",e.target.value)} style={{borderColor:"#b0d8b8"}}/>
                   </div>
+                  {renderTradersLeg("tradersCompra","#b0d8b8")}
                 </div>
                 <div style={{display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",background:"#f5f2ee",borderTop:"1px solid #d8ceb8",borderBottom:"1px solid #d8ceb8",gap:4}}>
                   <div style={{fontSize:20,color:"#9C0033"}}>⇒</div>
@@ -1704,6 +1814,7 @@ export default function BlotterBondsINVEX() {
                     <div className="lbl">Tasa Dealt Venta (%)</div>
                     <input type="number" step="0.001" placeholder="9.180" value={form.tasaVenta} onChange={e=>sF("tasaVenta",e.target.value)} style={{borderColor:"#e8a0a0"}}/>
                   </div>
+                  {renderTradersLeg("tradersVenta","#e8a0a0")}
                 </div>
               </div>
 
@@ -1740,12 +1851,6 @@ export default function BlotterBondsINVEX() {
 
               <hr className="hr" style={{marginBottom:18}}/>
               <div className="g2" style={{marginBottom:20}}>
-                <div><div className="lbl">Operador</div>
-                  <select value={form.operador} onChange={e=>sF("operador",e.target.value)}>
-                    <option value="">Selecciona operador…</option>
-                    {operadores.map(o=><option key={o}>{o}</option>)}
-                  </select>
-                </div>
                 <div><div className="lbl">Estatus</div>
                   <select value={form.estatus} onChange={e=>sF("estatus",e.target.value)}>
                     <option value="Booked">Booked</option>

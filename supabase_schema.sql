@@ -35,10 +35,12 @@ CREATE TABLE IF NOT EXISTS public.operaciones (
   comprador_cp      TEXT,
   px_compra         NUMERIC,
   tasa_compra       NUMERIC,
+  traders_compra    JSONB,   -- [{"nombre": "CLAU", "titulos": 600000}, ...]
   vendedor_cp       TEXT,
   px_venta          NUMERIC,
   tasa_venta        NUMERIC,
-  operador          TEXT,
+  traders_venta     JSONB,   -- [{"nombre": "DANI", "titulos": 400000}, ...]
+  operador          TEXT,    -- legacy / resumen de traders asignados
   estatus           TEXT DEFAULT 'Booked',
   notas             TEXT,
   created_at        TIMESTAMPTZ DEFAULT NOW()
@@ -74,6 +76,8 @@ ALTER TABLE public.operaciones ADD COLUMN IF NOT EXISTS fecha_valor       TEXT D
 ALTER TABLE public.operaciones ADD COLUMN IF NOT EXISTS fecha_liquidacion TEXT;
 ALTER TABLE public.operaciones ADD COLUMN IF NOT EXISTS tasa_compra       NUMERIC;
 ALTER TABLE public.operaciones ADD COLUMN IF NOT EXISTS tasa_venta        NUMERIC;
+ALTER TABLE public.operaciones ADD COLUMN IF NOT EXISTS traders_compra    JSONB;
+ALTER TABLE public.operaciones ADD COLUMN IF NOT EXISTS traders_venta     JSONB;
 ALTER TABLE public.operaciones DROP COLUMN IF EXISTS tasa;
 
 -- ============================================================
