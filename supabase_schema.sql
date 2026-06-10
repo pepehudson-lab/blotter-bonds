@@ -17,27 +17,30 @@ CREATE POLICY "profiles_all" ON public.profiles FOR ALL TO authenticated USING (
 
 -- 2. OPERACIONES (blotter trades)
 CREATE TABLE IF NOT EXISTS public.operaciones (
-  id            TEXT PRIMARY KEY,
-  fecha         TEXT,
-  emisor        TEXT,
-  isin          TEXT,
-  tipo          TEXT,
-  cupon         NUMERIC,
-  vencimiento   TEXT,
-  tipo_venc     TEXT,
-  calificacion  TEXT,
-  moneda        TEXT,
-  titulos       NUMERIC,
-  valor_nominal NUMERIC,
-  tipo_cambio   NUMERIC DEFAULT 1,
-  comprador_cp  TEXT,
-  px_compra     NUMERIC,
-  vendedor_cp   TEXT,
-  px_venta      NUMERIC,
-  operador      TEXT,
-  estatus       TEXT DEFAULT 'Booked',
-  notas         TEXT,
-  created_at    TIMESTAMPTZ DEFAULT NOW()
+  id                TEXT PRIMARY KEY,
+  fecha             TEXT,
+  fecha_valor       TEXT DEFAULT 'T+1',
+  fecha_liquidacion TEXT,
+  emisor            TEXT,
+  isin              TEXT,
+  tipo              TEXT,
+  cupon             NUMERIC,
+  vencimiento       TEXT,
+  tipo_venc         TEXT,
+  calificacion      TEXT,
+  moneda            TEXT,
+  tasa              NUMERIC,
+  titulos           NUMERIC,
+  valor_nominal     NUMERIC,
+  tipo_cambio       NUMERIC DEFAULT 1,
+  comprador_cp      TEXT,
+  px_compra         NUMERIC,
+  vendedor_cp       TEXT,
+  px_venta          NUMERIC,
+  operador          TEXT,
+  estatus           TEXT DEFAULT 'Booked',
+  notas             TEXT,
+  created_at        TIMESTAMPTZ DEFAULT NOW()
 );
 ALTER TABLE public.operaciones ENABLE ROW LEVEL SECURITY;
 CREATE POLICY "operaciones_all" ON public.operaciones FOR ALL TO authenticated USING (true) WITH CHECK (true);
@@ -60,6 +63,15 @@ CREATE POLICY "ops_all"  ON public.operadores     FOR ALL TO authenticated USING
 CREATE POLICY "cal_all"  ON public.calificaciones FOR ALL TO authenticated USING (true) WITH CHECK (true);
 CREATE POLICY "tv_all"   ON public.tipos_venc     FOR ALL TO authenticated USING (true) WITH CHECK (true);
 CREATE POLICY "mon_all"  ON public.monedas        FOR ALL TO authenticated USING (true) WITH CHECK (true);
+
+-- ============================================================
+-- MIGRATION: run this on an existing database to add columns
+-- introduced after the initial deployment (idempotent — safe
+-- to run multiple times).
+-- ============================================================
+ALTER TABLE public.operaciones ADD COLUMN IF NOT EXISTS fecha_valor       TEXT DEFAULT 'T+1';
+ALTER TABLE public.operaciones ADD COLUMN IF NOT EXISTS fecha_liquidacion TEXT;
+ALTER TABLE public.operaciones ADD COLUMN IF NOT EXISTS tasa              NUMERIC;
 
 -- ============================================================
 -- SEED: default admin user

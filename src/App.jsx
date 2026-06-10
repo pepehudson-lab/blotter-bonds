@@ -131,7 +131,8 @@ export default function BlotterBondsINVEX() {
     emisor: op.emisor, isin: op.isin || null,
     tipo: op.tipo, cupon: op.cupon != null && op.cupon !== '' ? (Number(op.cupon) > 1 ? Number(op.cupon) / 100 : Number(op.cupon)) : null, vencimiento: op.vencimiento || null,
     tipo_venc: op.tipoVenc || null, calificacion: op.calificacion || null,
-    moneda: op.moneda, titulos: op.titulos, valor_nominal: op.valorNominal,
+    moneda: op.moneda, tasa: op.tasa != null && op.tasa !== '' ? Number(op.tasa) : null,
+    titulos: op.titulos, valor_nominal: op.valorNominal,
     tipo_cambio: op.tipoCambio || 1, comprador_cp: op.compradorCp || null,
     px_compra: op.pxCompra, vendedor_cp: op.vendedorCp || null,
     px_venta: op.pxVenta, operador: op.operador || null,
@@ -143,6 +144,7 @@ export default function BlotterBondsINVEX() {
     emisor: row.emisor, isin: row.isin,
     tipo: row.tipo, cupon: row.cupon != null ? Number(row.cupon) <= 1 ? Number(row.cupon) * 100 : Number(row.cupon) : 0, vencimiento: row.vencimiento,
     tipoVenc: row.tipo_venc, calificacion: row.calificacion, moneda: row.moneda,
+    tasa: row.tasa != null ? Number(row.tasa) : null,
     titulos: Number(row.titulos), valorNominal: Number(row.valor_nominal),
     tipoCambio: Number(row.tipo_cambio || 1), compradorCp: row.comprador_cp,
     pxCompra: Number(row.px_compra), vendedorCp: row.vendedor_cp,
@@ -304,7 +306,7 @@ export default function BlotterBondsINVEX() {
     } catch { return null; }
   };
 
-  const formVacio = { fecha: new Date().toISOString().slice(0, 10), fechaValor: "T+1", emisor: "", isin: "", tipo: "Gubernamental", cupon: "", vencimiento: "", tipoVenc: "Bullet", calificacion: "A", moneda: "MXN", titulos: "", valorNominal: "100", tipoCambio: "1", compradorCp: "", pxCompra: "", vendedorCp: "", pxVenta: "", operador: "", estatus: "Booked" };
+  const formVacio = { fecha: new Date().toISOString().slice(0, 10), fechaValor: "T+1", emisor: "", isin: "", tipo: "Gubernamental", cupon: "", vencimiento: "", tipoVenc: "Bullet", calificacion: "A", moneda: "MXN", tasa: "", titulos: "", valorNominal: "100", tipoCambio: "1", compradorCp: "", pxCompra: "", vendedorCp: "", pxVenta: "", operador: "", estatus: "Booked" };
   const [form, setForm] = useState(formVacio);
   const sF = (k, v) => setForm(f => ({ ...f, [k]: v }));
 
@@ -367,6 +369,7 @@ export default function BlotterBondsINVEX() {
       pxCompra:          parseFloat(form.pxCompra),
       pxVenta:           parseFloat(form.pxVenta),
       cupon:             parseFloat(form.cupon),
+      tasa:              form.tasa !== "" && form.tasa != null ? parseFloat(form.tasa) : null,
       fechaLiquidacion:  calcFechaLiquidacion(form.fecha, form.fechaValor),
       estatus:           "Booked",
     };
@@ -377,7 +380,7 @@ export default function BlotterBondsINVEX() {
 
   const abrirCorreccion = (ticket) => {
     setModoCorr(ticket);
-    setForm({ ...ticket, pxCompra: String(ticket.pxCompra), pxVenta: String(ticket.pxVenta), titulos: String(ticket.titulos || ""), valorNominal: String(ticket.valorNominal || 100), tipoCambio: String(ticket.tipoCambio || 1), cupon: String(ticket.cupon), estatus: "Booked/Corregido" });
+    setForm({ ...ticket, pxCompra: String(ticket.pxCompra), pxVenta: String(ticket.pxVenta), titulos: String(ticket.titulos || ""), valorNominal: String(ticket.valorNominal || 100), tipoCambio: String(ticket.tipoCambio || 1), cupon: String(ticket.cupon), tasa: ticket.tasa != null ? String(ticket.tasa) : "", estatus: "Booked/Corregido" });
     setPlantillaSel("");
     setMostrarForm(true);
     setFilaExp(null);
@@ -392,6 +395,7 @@ export default function BlotterBondsINVEX() {
       pxCompra:          parseFloat(form.pxCompra),
       pxVenta:           parseFloat(form.pxVenta),
       cupon:             parseFloat(form.cupon),
+      tasa:              form.tasa !== "" && form.tasa != null ? parseFloat(form.tasa) : null,
       fechaLiquidacion:  calcFechaLiquidacion(form.fecha, form.fechaValor),
       estatus:           "Booked/Corregido",
     };
@@ -1496,6 +1500,7 @@ export default function BlotterBondsINVEX() {
               <div className="g3" style={{marginBottom:12}}>
                 <div><div className="lbl">Calificación</div><select value={form.calificacion} onChange={e=>sF("calificacion",e.target.value)}>{calificaciones.map(r=><option key={r}>{r}</option>)}</select></div>
                 <div><div className="lbl">Moneda</div><select value={form.moneda} onChange={e=>{ sF("moneda",e.target.value); if(e.target.value==="MXN") sF("tipoCambio","1"); }}>{MONEDAS.map(c=><option key={c}>{c}</option>)}</select></div>
+                <div><div className="lbl">Tasa Dealt (%)</div><input type="number" step="0.001" placeholder="9.250" value={form.tasa} onChange={e=>sF("tasa",e.target.value)}/></div>
               </div>
 
               {/* ── CALCULADORA DE PRECIO ── */}
