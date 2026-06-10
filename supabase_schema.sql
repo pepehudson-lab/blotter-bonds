@@ -29,14 +29,15 @@ CREATE TABLE IF NOT EXISTS public.operaciones (
   tipo_venc         TEXT,
   calificacion      TEXT,
   moneda            TEXT,
-  tasa              NUMERIC,
   titulos           NUMERIC,
   valor_nominal     NUMERIC,
   tipo_cambio       NUMERIC DEFAULT 1,
   comprador_cp      TEXT,
   px_compra         NUMERIC,
+  tasa_compra       NUMERIC,
   vendedor_cp       TEXT,
   px_venta          NUMERIC,
+  tasa_venta        NUMERIC,
   operador          TEXT,
   estatus           TEXT DEFAULT 'Booked',
   notas             TEXT,
@@ -71,7 +72,9 @@ CREATE POLICY "mon_all"  ON public.monedas        FOR ALL TO authenticated USING
 -- ============================================================
 ALTER TABLE public.operaciones ADD COLUMN IF NOT EXISTS fecha_valor       TEXT DEFAULT 'T+1';
 ALTER TABLE public.operaciones ADD COLUMN IF NOT EXISTS fecha_liquidacion TEXT;
-ALTER TABLE public.operaciones ADD COLUMN IF NOT EXISTS tasa              NUMERIC;
+ALTER TABLE public.operaciones ADD COLUMN IF NOT EXISTS tasa_compra       NUMERIC;
+ALTER TABLE public.operaciones ADD COLUMN IF NOT EXISTS tasa_venta        NUMERIC;
+ALTER TABLE public.operaciones DROP COLUMN IF EXISTS tasa;
 
 -- ============================================================
 -- SEED: default admin user
