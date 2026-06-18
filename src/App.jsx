@@ -235,6 +235,14 @@ export default function BlotterBondsINVEX() {
     return () => sb.removeChannel(ch);
   }, [sesion]); // eslint-disable-line
 
+  // Fallback sync: re-fetch when the user switches back to this tab
+  useEffect(() => {
+    if (!sesion) return;
+    const onVisible = () => { if (document.visibilityState === 'visible') cargarDatos(); };
+    document.addEventListener('visibilitychange', onVisible);
+    return () => document.removeEventListener('visibilitychange', onVisible);
+  }, [sesion, cargarDatos]);
+
   const loginUsuario = async () => {
     setLoginError("");
     const { data, error } = await sb.auth.signInWithPassword({
@@ -387,6 +395,7 @@ export default function BlotterBondsINVEX() {
     setOps(prev => [newOp, ...prev]);
     await sb.from('operaciones').insert(mapOpToDb(newOp));
     cerrarModal();
+    cargarDatos();
   };
 
   const legToForm = (rows, legacyCp, legacyPx, legacyTasa, legacyTitulos, legacyTrader) =>
@@ -430,12 +439,14 @@ export default function BlotterBondsINVEX() {
     setOps(prev => prev.map(t => t.id === modoCorreccion.id ? updatedOp : t));
     await sb.from('operaciones').update(mapOpToDb(updatedOp)).eq('id', modoCorreccion.id);
     cerrarModal();
+    cargarDatos();
   };
 
   const cancelarOp = async (id) => {
     setOps(prev => prev.map(t => t.id === id ? { ...t, estatus: "Cancelada" } : t));
     await sb.from('operaciones').update({ estatus: "Cancelada" }).eq('id', id);
     setFilaExp(null);
+    cargarDatos();
   };
 
   const toggleSelec = (id) => setSelec(prev => { const s = new Set(prev); s.has(id) ? s.delete(id) : s.add(id); return s; });
@@ -447,6 +458,7 @@ export default function BlotterBondsINVEX() {
     setOps(prev => prev.map(t => ids.includes(t.id) ? { ...t, estatus: "Cancelada" } : t));
     await sb.from('operaciones').update({ estatus: "Cancelada" }).in('id', ids);
     setSelec(new Set());
+    cargarDatos();
   };
   const eliminarBulk = async () => {
     if (!seleccionadas.size) return;
@@ -456,6 +468,7 @@ export default function BlotterBondsINVEX() {
     await sb.from('operaciones').delete().in('id', ids);
     setSelec(new Set());
     setFilaExp(null);
+    cargarDatos();
   };
 
   const enriquecidas = useMemo(() => operaciones.map(t => ({ ...t, ...calcPnl(t) })), [operaciones]);
