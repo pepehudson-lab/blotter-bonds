@@ -873,7 +873,7 @@ export default function BlotterBondsINVEX() {
                       title="Seleccionar todas"
                     />
                   </th>
-                  {[["id","ID"],["fecha","Fecha"],["emisor","Bono"],["moneda","Mon."],["titulos","Títulos"],["valorNominal","V.N."],["compradorCp","Comprador"],["pxCompra","Px.S. Cpa"],["importeCompraMXN","Imp.Cpa MXN"],["vendedorCp","Vendedor"],["pxVenta","Px.S. Vta"],["importeVentaMXN","Imp.Vta MXN"],["diferencial","Dif.pts"],["pnl","P&L MXN"],["operador","Operador"],["estatus","Estatus"]].map(([c,l]) => (
+                  {[["id","ID"],["fecha","Fecha"],["emisor","Bono"],["moneda","Mon."],["titulos","Títulos"],["valorNominal","V.N."],["compradorCp","Comprador"],["_allocCpa","Allocation"],["pxCompra","Px.S. Cpa"],["importeCompraMXN","Imp.Cpa MXN"],["vendedorCp","Vendedor"],["_allocVta","Allocation"],["pxVenta","Px.S. Vta"],["importeVentaMXN","Imp.Vta MXN"],["diferencial","Dif.pts"],["pnl","P&L MXN"],["operador","Operador"],["estatus","Estatus"]].map(([c,l]) => (
                     <th key={c} className="th" onClick={() => ordenar(c)}>{l} <SI col={c}/></th>
                   ))}
                 </tr>
@@ -898,23 +898,35 @@ export default function BlotterBondsINVEX() {
                     {/* Compra */}
                     <td className="td">
                       {t.compradores?.length
-                        ? t.compradores.map((r,i) => <div key={i} style={{ color: "#1a7a3a", fontWeight: 600, fontSize: 10 }}>{r.contraparte} <span style={{ color: "#8aaa9a", fontWeight: 400, fontSize: 9 }}>{Number(r.titulos).toLocaleString("es-MX")}</span></div>)
+                        ? t.compradores.map((r,i) => <div key={i} style={{ color: "#1a7a3a", fontWeight: 600, fontSize: 10 }}>{r.contraparte}</div>)
                         : <><div style={{ color: "#1a7a3a", fontWeight: 600, fontSize: 11 }}>{t.compradorCp}</div><div style={{ color: "#b0d8b8", fontSize: 9 }}>COMPRADOR</div></>
                       }
                     </td>
+                    <td className="td" style={{ textAlign: "right" }}>
+                      {t.compradores?.length
+                        ? t.compradores.map((r,i) => <div key={i} style={{ fontSize: 10, color: "#1a7a3a", fontWeight: 700 }}>{Number(r.titulos).toLocaleString("es-MX")}</div>)
+                        : <span style={{ fontSize: 10, color: "#8a7050" }}>{Number(t.titulos).toLocaleString("es-MX")}</span>
+                      }
+                    </td>
                     <td className="td" style={{ textAlign: "right", color: "#1a7a3a", fontWeight: 800, fontSize: 12 }}>
-                      {t.compradores?.length ? t.compradores.map((r,i)=><div key={i}>{fmt(r.px,4)} <span style={{fontSize:9,color:"#8aaa9a",fontWeight:400}}>{Number(r.titulos).toLocaleString("es-MX")}</span></div>) : fmt(t.pxCompra,4)}
+                      {t.compradores?.length ? t.compradores.map((r,i)=><div key={i}>{fmt(r.px,4)}</div>) : fmt(t.pxCompra,4)}
                     </td>
                     <td className="td" style={{ textAlign: "right", color: "#1a7a3a", fontWeight: 700, fontSize: 11 }}>MX${fmt(t.importeCompraMXN,0)}</td>
                     {/* Venta */}
                     <td className="td">
                       {t.vendedores?.length
-                        ? t.vendedores.map((r,i) => <div key={i} style={{ color: "#c02020", fontWeight: 600, fontSize: 10 }}>{r.contraparte} <span style={{ color: "#cc9090", fontWeight: 400, fontSize: 9 }}>{Number(r.titulos).toLocaleString("es-MX")}</span></div>)
+                        ? t.vendedores.map((r,i) => <div key={i} style={{ color: "#c02020", fontWeight: 600, fontSize: 10 }}>{r.contraparte}</div>)
                         : <><div style={{ color: "#c02020", fontWeight: 600, fontSize: 11 }}>{t.vendedorCp}</div><div style={{ color: "#301418", fontSize: 9 }}>VENDEDOR</div></>
                       }
                     </td>
+                    <td className="td" style={{ textAlign: "right" }}>
+                      {t.vendedores?.length
+                        ? t.vendedores.map((r,i) => <div key={i} style={{ fontSize: 10, color: "#c02020", fontWeight: 700 }}>{Number(r.titulos).toLocaleString("es-MX")}</div>)
+                        : <span style={{ fontSize: 10, color: "#8a7050" }}>{Number(t.titulos).toLocaleString("es-MX")}</span>
+                      }
+                    </td>
                     <td className="td" style={{ textAlign: "right", color: "#c02020", fontWeight: 800, fontSize: 12 }}>
-                      {t.vendedores?.length ? t.vendedores.map((r,i)=><div key={i}>{fmt(r.px,4)} <span style={{fontSize:9,color:"#cc9090",fontWeight:400}}>{Number(r.titulos).toLocaleString("es-MX")}</span></div>) : fmt(t.pxVenta,4)}
+                      {t.vendedores?.length ? t.vendedores.map((r,i)=><div key={i}>{fmt(r.px,4)}</div>) : fmt(t.pxVenta,4)}
                     </td>
                     <td className="td" style={{ textAlign: "right", color: "#c02020", fontWeight: 700, fontSize: 11 }}>MX${fmt(t.importeVentaMXN,0)}</td>
                     {/* Diferencial y P&L */}
@@ -941,7 +953,7 @@ export default function BlotterBondsINVEX() {
                   </tr>
                   {filaExp === t.id && (
                     <tr key={t.id+"-x"} style={{ background: "#f5f0e8" }}>
-                      <td colSpan={17} style={{ padding: "14px 16px 16px" }}>
+                      <td colSpan={19} style={{ padding: "14px 16px 16px" }}>
                         <div style={{ display: "grid", gridTemplateColumns: "1fr 60px 1fr 1fr", gap: 12 }}>
                           {/* COMPRADORES */}
                           <div style={{ background: "#f0faf4", border: "1px solid #143020", borderRadius: 4, padding: 14 }}>
