@@ -898,7 +898,7 @@ export default function BlotterBondsINVEX() {
                     {/* Compra */}
                     <td className="td">
                       {t.compradores?.length > 1
-                        ? t.compradores.map((r,i) => <div key={i} style={{ color: "#1a7a3a", fontWeight: 600, fontSize: 10 }}>{r.contraparte}</div>)
+                        ? t.compradores.map((r,i) => <div key={i} style={{ color: "#1a7a3a", fontWeight: 600, fontSize: 10 }}>{r.contraparte} <span style={{ color: "#8aaa9a", fontWeight: 400, fontSize: 9 }}>{Number(r.titulos).toLocaleString("es-MX")}</span></div>)
                         : <><div style={{ color: "#1a7a3a", fontWeight: 600, fontSize: 11 }}>{t.compradorCp}</div><div style={{ color: "#b0d8b8", fontSize: 9 }}>COMPRADOR</div></>
                       }
                     </td>
@@ -909,7 +909,7 @@ export default function BlotterBondsINVEX() {
                     {/* Venta */}
                     <td className="td">
                       {t.vendedores?.length > 1
-                        ? t.vendedores.map((r,i) => <div key={i} style={{ color: "#c02020", fontWeight: 600, fontSize: 10 }}>{r.contraparte}</div>)
+                        ? t.vendedores.map((r,i) => <div key={i} style={{ color: "#c02020", fontWeight: 600, fontSize: 10 }}>{r.contraparte} <span style={{ color: "#cc9090", fontWeight: 400, fontSize: 9 }}>{Number(r.titulos).toLocaleString("es-MX")}</span></div>)
                         : <><div style={{ color: "#c02020", fontWeight: 600, fontSize: 11 }}>{t.vendedorCp}</div><div style={{ color: "#301418", fontSize: 9 }}>VENDEDOR</div></>
                       }
                     </td>
