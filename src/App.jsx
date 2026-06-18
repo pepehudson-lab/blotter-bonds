@@ -684,7 +684,7 @@ export default function BlotterBondsINVEX() {
         .p-mxn{background:#fde8e8;color:#901818;border:1px solid #e8a0a0}
         .p-eur{background:#eeeeff;color:#302890;border:1px solid #b0b0f0}
         .modal-bg{position:fixed;inset:0;background:rgba(20,15,5,.55);z-index:100;display:flex;align-items:center;justify-content:center;backdrop-filter:blur(6px)}
-        .modal{background:#faf8f4;border:1px solid #d8ceb8;border-radius:6px;width:840px;max-height:92vh;overflow-y:auto;box-shadow:0 20px 60px rgba(0,0,0,.18)}
+        .modal{background:#faf8f4;border:1px solid #d8ceb8;border-radius:6px;width:1080px;max-width:96vw;max-height:92vh;overflow-y:auto;box-shadow:0 20px 60px rgba(0,0,0,.18)}
         .g2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
         .g3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px}
         .lbl{font-size:9px;color:#8a7050;letter-spacing:1.5px;text-transform:uppercase;margin-bottom:5px}
@@ -1829,14 +1829,14 @@ export default function BlotterBondsINVEX() {
                         {leg==="compradores" ? "Compradores — pagan al desk" : "Vendedores — reciben del desk"}
                       </div>
                       {/* Column labels */}
-                      <div style={{display:"grid",gridTemplateColumns:"2fr 1fr 1.2fr 0.9fr 1.3fr 28px",gap:5,marginBottom:4}}>
+                      <div style={{display:"grid",gridTemplateColumns:"3fr 1fr 1.1fr 0.8fr 1fr 28px",gap:5,marginBottom:4}}>
                         {["Contraparte","Títulos","Px Sucio","Tasa %","Trader",""].map((l,i)=><div key={i} style={{fontSize:8,color:"#8a7050",letterSpacing:1,textTransform:"uppercase"}}>{l}</div>)}
                       </div>
                       {rows.map((r,i) => {
                         const imp = (parseFloat(r.px)||0)*(parseFloat(r.titulos)||0);
                         return (
                           <div key={i} style={{marginBottom:6}}>
-                            <div style={{display:"grid",gridTemplateColumns:"2fr 1fr 1.2fr 0.9fr 1.3fr 28px",gap:5}}>
+                            <div style={{display:"grid",gridTemplateColumns:"3fr 1fr 1.1fr 0.8fr 1fr 28px",gap:5}}>
                               <select value={r.contraparte} onChange={e=>setLeg(leg,i,"contraparte",e.target.value)} style={{borderColor,fontSize:11}}>
                                 <option value="">Contraparte…</option>
                                 {contrapartes.map(c=><option key={c}>{c}</option>)}
@@ -1868,7 +1868,7 @@ export default function BlotterBondsINVEX() {
                 const pos = pnlMXN >= 0;
                 return (
                   <>
-                    <div style={{display:"grid",gridTemplateColumns:"1fr 60px 1fr",gap:10,marginBottom:16}}>
+                    <div style={{display:"grid",gridTemplateColumns:"1fr 50px 1fr",gap:8,marginBottom:16}}>
                       {renderLeg("compradores","#1a7a3a","#143020","#f0faf4")}
                       <div style={{display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",background:"#f5f2ee",border:"1px solid #d8ceb8",borderRadius:4,gap:4}}>
                         <div style={{fontSize:18,color:"#9C0033"}}>⇒</div>
