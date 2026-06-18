@@ -897,24 +897,24 @@ export default function BlotterBondsINVEX() {
                     <td className="td" style={{ textAlign: "right", color: "#8a7050" }}>{t.valorNominal ? fmt(t.valorNominal, 0) : "-"}</td>
                     {/* Compra */}
                     <td className="td">
-                      {t.compradores?.length > 1
+                      {t.compradores?.length
                         ? t.compradores.map((r,i) => <div key={i} style={{ color: "#1a7a3a", fontWeight: 600, fontSize: 10 }}>{r.contraparte} <span style={{ color: "#8aaa9a", fontWeight: 400, fontSize: 9 }}>{Number(r.titulos).toLocaleString("es-MX")}</span></div>)
                         : <><div style={{ color: "#1a7a3a", fontWeight: 600, fontSize: 11 }}>{t.compradorCp}</div><div style={{ color: "#b0d8b8", fontSize: 9 }}>COMPRADOR</div></>
                       }
                     </td>
                     <td className="td" style={{ textAlign: "right", color: "#1a7a3a", fontWeight: 800, fontSize: 12 }}>
-                      {t.compradores?.length > 1 ? t.compradores.map((r,i)=><div key={i}>{fmt(r.px,4)} <span style={{fontSize:9,color:"#8aaa9a",fontWeight:400}}>{Number(r.titulos).toLocaleString("es-MX")}</span></div>) : fmt(t.pxCompra,4)}
+                      {t.compradores?.length ? t.compradores.map((r,i)=><div key={i}>{fmt(r.px,4)} <span style={{fontSize:9,color:"#8aaa9a",fontWeight:400}}>{Number(r.titulos).toLocaleString("es-MX")}</span></div>) : fmt(t.pxCompra,4)}
                     </td>
                     <td className="td" style={{ textAlign: "right", color: "#1a7a3a", fontWeight: 700, fontSize: 11 }}>MX${fmt(t.importeCompraMXN,0)}</td>
                     {/* Venta */}
                     <td className="td">
-                      {t.vendedores?.length > 1
+                      {t.vendedores?.length
                         ? t.vendedores.map((r,i) => <div key={i} style={{ color: "#c02020", fontWeight: 600, fontSize: 10 }}>{r.contraparte} <span style={{ color: "#cc9090", fontWeight: 400, fontSize: 9 }}>{Number(r.titulos).toLocaleString("es-MX")}</span></div>)
                         : <><div style={{ color: "#c02020", fontWeight: 600, fontSize: 11 }}>{t.vendedorCp}</div><div style={{ color: "#301418", fontSize: 9 }}>VENDEDOR</div></>
                       }
                     </td>
                     <td className="td" style={{ textAlign: "right", color: "#c02020", fontWeight: 800, fontSize: 12 }}>
-                      {t.vendedores?.length > 1 ? t.vendedores.map((r,i)=><div key={i}>{fmt(r.px,4)} <span style={{fontSize:9,color:"#cc9090",fontWeight:400}}>{Number(r.titulos).toLocaleString("es-MX")}</span></div>) : fmt(t.pxVenta,4)}
+                      {t.vendedores?.length ? t.vendedores.map((r,i)=><div key={i}>{fmt(r.px,4)} <span style={{fontSize:9,color:"#cc9090",fontWeight:400}}>{Number(r.titulos).toLocaleString("es-MX")}</span></div>) : fmt(t.pxVenta,4)}
                     </td>
                     <td className="td" style={{ textAlign: "right", color: "#c02020", fontWeight: 700, fontSize: 11 }}>MX${fmt(t.importeVentaMXN,0)}</td>
                     {/* Diferencial y P&L */}
