@@ -35,12 +35,14 @@ CREATE TABLE IF NOT EXISTS public.operaciones (
   comprador_cp      TEXT,
   px_compra         NUMERIC,
   tasa_compra       NUMERIC,
-  traders_compra    JSONB,   -- [{"nombre": "CLAU", "titulos": 600000}, ...]
+  traders_compra    JSONB,   -- legacy (superseded by compradores)
+  compradores       JSONB,   -- [{"contraparte":"AFORE AZTECA","titulos":600,"px":100.5,"tasa":9.25,"trader":"CLAU"},...]
   vendedor_cp       TEXT,
   px_venta          NUMERIC,
   tasa_venta        NUMERIC,
-  traders_venta     JSONB,   -- [{"nombre": "DANI", "titulos": 400000}, ...]
-  operador          TEXT,    -- legacy / resumen de traders asignados
+  traders_venta     JSONB,   -- legacy (superseded by vendedores)
+  vendedores        JSONB,   -- [{"contraparte":"BCO INVEX","titulos":600,"px":100.25,"tasa":9.18,"trader":"DANI"},...]
+  operador          TEXT,    -- derived summary of all traders
   estatus           TEXT DEFAULT 'Booked',
   notas             TEXT,
   created_at        TIMESTAMPTZ DEFAULT NOW()
@@ -78,6 +80,8 @@ ALTER TABLE public.operaciones ADD COLUMN IF NOT EXISTS tasa_compra       NUMERI
 ALTER TABLE public.operaciones ADD COLUMN IF NOT EXISTS tasa_venta        NUMERIC;
 ALTER TABLE public.operaciones ADD COLUMN IF NOT EXISTS traders_compra    JSONB;
 ALTER TABLE public.operaciones ADD COLUMN IF NOT EXISTS traders_venta     JSONB;
+ALTER TABLE public.operaciones ADD COLUMN IF NOT EXISTS compradores       JSONB;
+ALTER TABLE public.operaciones ADD COLUMN IF NOT EXISTS vendedores        JSONB;
 ALTER TABLE public.operaciones DROP COLUMN IF EXISTS tasa;
 
 -- ============================================================

@@ -49,21 +49,40 @@ const DATOS_INICIALES = [
 ];
 
 const calcPnl = (t) => {
-  // Precio sucio = precio DIRECTO por título en la moneda del bono (no % del par)
-  // Importe = pxSucio × Títulos
-  const titulos = t.titulos      || 0;
-  const vn      = t.valorNominal || 100;
-  const tc      = t.tipoCambio   || 1;   // tipo de cambio a MXN (1 si ya es MXN)
-  const nominal = titulos * vn;           // nominal total en moneda del bono
+  const vn = t.valorNominal || 100;
+  const tc = t.tipoCambio   || 1;
 
-  const importeCompra    = t.pxCompra * titulos;          // precio directo × títulos (moneda del bono)
-  const importeVenta     = t.pxVenta  * titulos;          // precio directo × títulos (moneda del bono)
-  const importeCompraMXN = importeCompra * tc;            // convertido a MXN
-  const importeVentaMXN  = importeVenta  * tc;            // convertido a MXN
-  const diferencial      = t.pxCompra - t.pxVenta;       // diferencial en precio por título
-  const pnl              = importeCompraMXN - importeVentaMXN; // P&L en MXN
+  let titulos, importeCompra, importeVenta, diferencial, compradorCp, vendedorCp, pxCompra, pxVenta;
 
-  return { nominal, importeCompra, importeVenta, importeCompraMXN, importeVentaMXN, diferencial, pnl };
+  if (t.compradores && t.compradores.length) {
+    // multi-client model: each row has its own px and titulos
+    titulos       = t.compradores.reduce((s, r) => s + (Number(r.titulos)||0), 0);
+    const titV    = (t.vendedores||[]).reduce((s, r) => s + (Number(r.titulos)||0), 0);
+    importeCompra = t.compradores.reduce((s, r) => s + (Number(r.px)||0) * (Number(r.titulos)||0), 0);
+    importeVenta  = (t.vendedores||[]).reduce((s, r) => s + (Number(r.px)||0) * (Number(r.titulos)||0), 0);
+    pxCompra      = titulos ? importeCompra / titulos : 0;
+    pxVenta       = titV    ? importeVenta  / titV    : 0;
+    diferencial   = pxCompra - pxVenta;
+    compradorCp   = t.compradores.length === 1 ? t.compradores[0].contraparte : `${t.compradores.length} compradores`;
+    vendedorCp    = (t.vendedores||[]).length === 1 ? t.vendedores[0].contraparte : `${(t.vendedores||[]).length} vendedores`;
+  } else {
+    // legacy scalar model
+    titulos       = t.titulos    || 0;
+    importeCompra = (t.pxCompra||0) * titulos;
+    importeVenta  = (t.pxVenta ||0) * titulos;
+    diferencial   = (t.pxCompra||0) - (t.pxVenta||0);
+    compradorCp   = t.compradorCp;
+    vendedorCp    = t.vendedorCp;
+    pxCompra      = t.pxCompra;
+    pxVenta       = t.pxVenta;
+  }
+
+  const nominal        = titulos * vn;
+  const importeCompraMXN = importeCompra * tc;
+  const importeVentaMXN  = importeVenta  * tc;
+  const pnl            = importeCompraMXN - importeVentaMXN;
+
+  return { titulos, nominal, importeCompra, importeVenta, importeCompraMXN, importeVentaMXN, diferencial, pnl, compradorCp, vendedorCp, pxCompra, pxVenta };
 };
 
 const statusClass = (s) => {
@@ -125,23 +144,34 @@ export default function BlotterBondsINVEX() {
   const [appCargando, setAppCargando] = useState(true);
 
   // DB field mappers
-  const mapOpToDb = (op) => ({
-    id: op.id, fecha: op.fecha, fecha_valor: op.fechaValor || 'T+1',
-    fecha_liquidacion: op.fechaLiquidacion || null,
-    emisor: op.emisor, isin: op.isin || null,
-    tipo: op.tipo, cupon: op.cupon != null && op.cupon !== '' ? (Number(op.cupon) > 1 ? Number(op.cupon) / 100 : Number(op.cupon)) : null, vencimiento: op.vencimiento || null,
-    tipo_venc: op.tipoVenc || null, calificacion: op.calificacion || null,
-    moneda: op.moneda,
-    titulos: op.titulos, valor_nominal: op.valorNominal,
-    tipo_cambio: op.tipoCambio || 1, comprador_cp: op.compradorCp || null,
-    px_compra: op.pxCompra, tasa_compra: op.tasaCompra != null && op.tasaCompra !== '' ? Number(op.tasaCompra) : null,
-    traders_compra: op.tradersCompra && op.tradersCompra.length ? op.tradersCompra : null,
-    vendedor_cp: op.vendedorCp || null,
-    px_venta: op.pxVenta, tasa_venta: op.tasaVenta != null && op.tasaVenta !== '' ? Number(op.tasaVenta) : null,
-    traders_venta: op.tradersVenta && op.tradersVenta.length ? op.tradersVenta : null,
-    operador: op.operador || null,
-    estatus: op.estatus || 'Booked', notas: op.notas || null,
-  });
+  const mapOpToDb = (op) => {
+    const hasCp = op.compradores && op.compradores.length;
+    const hasVt = op.vendedores  && op.vendedores.length;
+    const sumCp = hasCp ? op.compradores.reduce((s,r)=>s+(Number(r.titulos)||0),0) : op.titulos||0;
+    const sumVt = hasVt ? op.vendedores.reduce((s,r)=>s+(Number(r.titulos)||0),0) : op.titulos||0;
+    return {
+      id: op.id, fecha: op.fecha, fecha_valor: op.fechaValor || 'T+1',
+      fecha_liquidacion: op.fechaLiquidacion || null,
+      emisor: op.emisor, isin: op.isin || null,
+      tipo: op.tipo, cupon: op.cupon != null && op.cupon !== '' ? (Number(op.cupon) > 1 ? Number(op.cupon) / 100 : Number(op.cupon)) : null,
+      vencimiento: op.vencimiento || null, tipo_venc: op.tipoVenc || null, calificacion: op.calificacion || null,
+      moneda: op.moneda, titulos: sumCp, valor_nominal: op.valorNominal, tipo_cambio: op.tipoCambio || 1,
+      // new multi-client JSONB legs
+      compradores: hasCp ? op.compradores : null,
+      vendedores:  hasVt ? op.vendedores  : null,
+      // legacy derived scalar fields (first row or existing scalars)
+      comprador_cp: hasCp ? op.compradores[0].contraparte : (op.compradorCp || null),
+      px_compra:    hasCp ? (op.compradores.reduce((s,r)=>s+(Number(r.px)||0)*(Number(r.titulos)||0),0) / (sumCp||1)) : (op.pxCompra || null),
+      tasa_compra:  hasCp ? (op.compradores[0].tasa ?? null) : (op.tasaCompra != null && op.tasaCompra !== '' ? Number(op.tasaCompra) : null),
+      traders_compra: null,
+      vendedor_cp:  hasVt ? op.vendedores[0].contraparte : (op.vendedorCp || null),
+      px_venta:     hasVt ? (op.vendedores.reduce((s,r)=>s+(Number(r.px)||0)*(Number(r.titulos)||0),0) / (sumVt||1)) : (op.pxVenta || null),
+      tasa_venta:   hasVt ? (op.vendedores[0].tasa ?? null) : (op.tasaVenta != null && op.tasaVenta !== '' ? Number(op.tasaVenta) : null),
+      traders_venta: null,
+      operador: op.operador || null,
+      estatus: op.estatus || 'Booked', notas: op.notas || null,
+    };
+  };
   const mapOpFromDb = (row) => ({
     id: row.id, fecha: row.fecha, fechaValor: row.fecha_valor || 'T+1',
     fechaLiquidacion: row.fecha_liquidacion,
@@ -149,14 +179,18 @@ export default function BlotterBondsINVEX() {
     tipo: row.tipo, cupon: row.cupon != null ? Number(row.cupon) <= 1 ? Number(row.cupon) * 100 : Number(row.cupon) : 0, vencimiento: row.vencimiento,
     tipoVenc: row.tipo_venc, calificacion: row.calificacion, moneda: row.moneda,
     titulos: Number(row.titulos), valorNominal: Number(row.valor_nominal),
-    tipoCambio: Number(row.tipo_cambio || 1), compradorCp: row.comprador_cp,
-    pxCompra: Number(row.px_compra), tasaCompra: row.tasa_compra != null ? Number(row.tasa_compra) : null,
+    tipoCambio: Number(row.tipo_cambio || 1),
+    // new multi-client legs (null for legacy trades)
+    compradores: row.compradores || null,
+    vendedores:  row.vendedores  || null,
+    // legacy scalar fields (used when compradores/vendedores is null)
+    compradorCp: row.comprador_cp, pxCompra: Number(row.px_compra),
+    tasaCompra: row.tasa_compra != null ? Number(row.tasa_compra) : null,
     tradersCompra: row.traders_compra || [],
-    vendedorCp: row.vendedor_cp,
-    pxVenta: Number(row.px_venta), tasaVenta: row.tasa_venta != null ? Number(row.tasa_venta) : null,
+    vendedorCp: row.vendedor_cp, pxVenta: Number(row.px_venta),
+    tasaVenta: row.tasa_venta != null ? Number(row.tasa_venta) : null,
     tradersVenta: row.traders_venta || [],
-    operador: row.operador,
-    estatus: row.estatus, notas: row.notas,
+    operador: row.operador, estatus: row.estatus, notas: row.notas,
   });
 
   const cargarDatos = useCallback(async () => {
@@ -313,53 +347,25 @@ export default function BlotterBondsINVEX() {
     } catch { return null; }
   };
 
-  const formVacio = { fecha: new Date().toISOString().slice(0, 10), fechaValor: "T+1", emisor: "", isin: "", tipo: "Gubernamental", cupon: "", vencimiento: "", tipoVenc: "Bullet", calificacion: "A", moneda: "MXN", titulos: "", valorNominal: "100", tipoCambio: "1", compradorCp: "", pxCompra: "", tasaCompra: "", tradersCompra: [{ nombre: "", titulos: "" }], vendedorCp: "", pxVenta: "", tasaVenta: "", tradersVenta: [{ nombre: "", titulos: "" }], operador: "", estatus: "Booked" };
+  const emptyLegRow = () => ({ contraparte: "", titulos: "", px: "", tasa: "", trader: "" });
+  const formVacio = { fecha: new Date().toISOString().slice(0, 10), fechaValor: "T+1", emisor: "", isin: "", tipo: "Gubernamental", cupon: "", vencimiento: "", tipoVenc: "Bullet", calificacion: "A", moneda: "MXN", valorNominal: "100", tipoCambio: "1", compradores: [emptyLegRow()], vendedores: [emptyLegRow()], estatus: "Booked" };
   const [form, setForm] = useState(formVacio);
   const sF = (k, v) => setForm(f => ({ ...f, [k]: v }));
 
-  // ── TRADERS POR LEG (asignación por títulos) ─────────────────────────────
-  const setTrader    = (leg, i, k, v) => setForm(f => ({ ...f, [leg]: f[leg].map((r, j) => j === i ? { ...r, [k]: v } : r) }));
-  const agregarTrader = (leg) => setForm(f => ({ ...f, [leg]: [...f[leg], { nombre: "", titulos: "" }] }));
-  const quitarTrader  = (leg, i) => setForm(f => ({ ...f, [leg]: f[leg].length > 1 ? f[leg].filter((_, j) => j !== i) : [{ nombre: "", titulos: "" }] }));
-  // Un solo trader con títulos vacío = se le asigna toda la operación
-  const limpiarTraders = (lista, totalTitulos) => {
-    const rows = (lista || []).filter(r => r.nombre);
-    if (rows.length === 1 && (rows[0].titulos === "" || rows[0].titulos == null)) return [{ nombre: rows[0].nombre, titulos: totalTitulos }];
-    return rows.map(r => ({ nombre: r.nombre, titulos: parseFloat(r.titulos) || 0 }));
-  };
-  const errorTraders = (lista, totalTitulos) => {
-    const rows = (lista || []).filter(r => r.nombre);
-    if (!rows.length) return null;
-    if (rows.length === 1 && (rows[0].titulos === "" || rows[0].titulos == null)) return null;
-    const suma = rows.reduce((s, r) => s + (parseFloat(r.titulos) || 0), 0);
-    if (!totalTitulos) return "Captura primero los títulos de la operación";
-    if (Math.abs(suma - totalTitulos) > 0.001) return `Asignados ${suma.toLocaleString("es-MX")} de ${Number(totalTitulos).toLocaleString("es-MX")} títulos`;
+  // ── LEG HELPERS ───────────────────────────────────────────────────────────
+  const setLeg    = (leg, i, k, v) => setForm(f => ({ ...f, [leg]: f[leg].map((r, j) => j === i ? { ...r, [k]: v } : r) }));
+  const addLeg    = (leg) => setForm(f => ({ ...f, [leg]: [...f[leg], emptyLegRow()] }));
+  const removeLeg = (leg, i) => setForm(f => ({ ...f, [leg]: f[leg].length > 1 ? f[leg].filter((_, j) => j !== i) : [emptyLegRow()] }));
+
+  const legFilledRows = (rows) => rows.filter(r => r.contraparte && r.titulos && r.px);
+  const legSum = (rows) => rows.reduce((s, r) => s + (parseFloat(r.titulos)||0), 0);
+  const legImporte = (rows) => rows.reduce((s, r) => s + (parseFloat(r.px)||0)*(parseFloat(r.titulos)||0), 0);
+  const legBalanceError = () => {
+    const cp = legFilledRows(form.compradores), vt = legFilledRows(form.vendedores);
+    if (!cp.length || !vt.length) return null;
+    const diff = Math.abs(legSum(cp) - legSum(vt));
+    if (diff > 0.001) return `Compra ${legSum(cp).toLocaleString("es-MX")} vs Venta ${legSum(vt).toLocaleString("es-MX")} títulos`;
     return null;
-  };
-  const renderTradersLeg = (leg, accent) => {
-    const lista = form[leg];
-    const tit = parseFloat(form.titulos) || 0;
-    const err = errorTraders(lista, tit);
-    const rows = lista.filter(r => r.nombre);
-    const unico = rows.length === 1 && (rows[0].titulos === "" || rows[0].titulos == null);
-    return (
-      <div style={{marginTop:10}}>
-        <div className="lbl">Traders del Leg (títulos asignados)</div>
-        {lista.map((r,i)=>(
-          <div key={i} style={{display:"flex",gap:6,marginBottom:6}}>
-            <select value={r.nombre} onChange={e=>setTrader(leg,i,"nombre",e.target.value)} style={{borderColor:accent,flex:1.4}}>
-              <option value="">Trader…</option>
-              {operadores.map(o=><option key={o}>{o}</option>)}
-            </select>
-            <input type="number" placeholder={lista.length===1?"todos":"títulos"} value={r.titulos} onChange={e=>setTrader(leg,i,"titulos",e.target.value)} style={{borderColor:accent,flex:1}}/>
-            <button onClick={()=>quitarTrader(leg,i)} title="Quitar trader" style={{background:"none",border:"1px solid #d8ceb8",borderRadius:3,cursor:"pointer",color:"#8a7050",padding:"0 8px",fontFamily:"inherit"}}>✕</button>
-          </div>
-        ))}
-        <button onClick={()=>agregarTrader(leg)} style={{background:"none",border:`1px dashed ${accent}`,borderRadius:3,cursor:"pointer",color:"#8a7050",fontSize:10,padding:"4px 10px",fontFamily:"inherit",width:"100%"}}>＋ agregar trader</button>
-        {err ? <div style={{fontSize:9,color:"#c02020",marginTop:4}}>⚠ {err}</div>
-             : unico ? <div style={{fontSize:9,color:"#8a7050",marginTop:4}}>Se asigna el 100% ({tit?tit.toLocaleString("es-MX"):"—"} títulos)</div> : null}
-      </div>
-    );
   };
 
   // Carga emisoras desde la BD al montar
@@ -410,63 +416,72 @@ export default function BlotterBondsINVEX() {
     setCalcRes(null);
   };
 
+  const buildLegRows = (rows) => rows.filter(r => r.contraparte && r.titulos && r.px).map(r => ({
+    contraparte: r.contraparte, titulos: parseFloat(r.titulos), px: parseFloat(r.px),
+    tasa: r.tasa !== "" && r.tasa != null ? parseFloat(r.tasa) : null, trader: r.trader || null,
+  }));
+
   const registrarOp = async () => {
-    if (!form.emisor || !form.titulos || !form.valorNominal || !form.pxCompra || !form.pxVenta || !form.compradorCp || !form.vendedorCp) return;
-    const tit = parseFloat(form.titulos);
-    if (errorTraders(form.tradersCompra, tit) || errorTraders(form.tradersVenta, tit)) return;
-    const tradersCompra = limpiarTraders(form.tradersCompra, tit);
-    const tradersVenta  = limpiarTraders(form.tradersVenta, tit);
+    const cpRows = legFilledRows(form.compradores), vtRows = legFilledRows(form.vendedores);
+    if (!form.emisor || !form.valorNominal || !cpRows.length || !vtRows.length) return;
+    if (legBalanceError()) return;
+    const compradores = buildLegRows(cpRows), vendedores = buildLegRows(vtRows);
+    const sumCp = legSum(compradores);
+    const allTraders = [...new Set([...compradores, ...vendedores].map(r => r.trader).filter(Boolean))];
     const newOp = {
       ...form,
-      id:                genId(),
-      titulos:           tit,
-      valorNominal:      parseFloat(form.valorNominal),
-      tipoCambio:        parseFloat(form.tipoCambio) || 1,
-      pxCompra:          parseFloat(form.pxCompra),
-      pxVenta:           parseFloat(form.pxVenta),
-      cupon:             parseFloat(form.cupon),
-      tasaCompra:        form.tasaCompra !== "" && form.tasaCompra != null ? parseFloat(form.tasaCompra) : null,
-      tasaVenta:         form.tasaVenta !== "" && form.tasaVenta != null ? parseFloat(form.tasaVenta) : null,
-      tradersCompra, tradersVenta,
-      operador:          [...new Set([...tradersCompra, ...tradersVenta].map(r => r.nombre))].join(", ") || form.operador || "",
-      fechaLiquidacion:  calcFechaLiquidacion(form.fecha, form.fechaValor),
-      estatus:           "Booked",
+      id:               genId(),
+      titulos:          sumCp,
+      valorNominal:     parseFloat(form.valorNominal),
+      tipoCambio:       parseFloat(form.tipoCambio) || 1,
+      cupon:            parseFloat(form.cupon),
+      compradores, vendedores,
+      operador:         allTraders.join(", "),
+      fechaLiquidacion: calcFechaLiquidacion(form.fecha, form.fechaValor),
+      estatus:          "Booked",
     };
     setOps(prev => [newOp, ...prev]);
     await sb.from('operaciones').insert(mapOpToDb(newOp));
     cerrarModal();
   };
 
+  const legToForm = (rows, legacyCp, legacyPx, legacyTasa, legacyTitulos, legacyTrader) =>
+    rows && rows.length
+      ? rows.map(r => ({ contraparte: r.contraparte||"", titulos: String(r.titulos||""), px: String(r.px||""), tasa: r.tasa != null ? String(r.tasa) : "", trader: r.trader||"" }))
+      : [{ contraparte: legacyCp||"", titulos: String(legacyTitulos||""), px: String(legacyPx||""), tasa: legacyTasa != null ? String(legacyTasa) : "", trader: legacyTrader||"" }];
+
   const abrirCorreccion = (ticket) => {
     setModoCorr(ticket);
-    setForm({ ...ticket, pxCompra: String(ticket.pxCompra), pxVenta: String(ticket.pxVenta), titulos: String(ticket.titulos || ""), valorNominal: String(ticket.valorNominal || 100), tipoCambio: String(ticket.tipoCambio || 1), cupon: String(ticket.cupon), tasaCompra: ticket.tasaCompra != null ? String(ticket.tasaCompra) : "", tasaVenta: ticket.tasaVenta != null ? String(ticket.tasaVenta) : "",
-      tradersCompra: ticket.tradersCompra && ticket.tradersCompra.length ? ticket.tradersCompra.map(r => ({ nombre: r.nombre, titulos: String(r.titulos) })) : [{ nombre: "", titulos: "" }],
-      tradersVenta:  ticket.tradersVenta  && ticket.tradersVenta.length  ? ticket.tradersVenta.map(r => ({ nombre: r.nombre, titulos: String(r.titulos) }))  : [{ nombre: "", titulos: "" }],
-      estatus: "Booked/Corregido" });
+    const legacyTraderC = ticket.tradersCompra?.[0]?.nombre || ticket.operador || "";
+    const legacyTraderV = ticket.tradersVenta?.[0]?.nombre  || ticket.operador || "";
+    setForm({
+      ...formVacio, ...ticket,
+      valorNominal: String(ticket.valorNominal || 100), tipoCambio: String(ticket.tipoCambio || 1), cupon: String(ticket.cupon||""),
+      compradores: legToForm(ticket.compradores, ticket.compradorCp, ticket.pxCompra, ticket.tasaCompra, ticket.titulos, legacyTraderC),
+      vendedores:  legToForm(ticket.vendedores,  ticket.vendedorCp,  ticket.pxVenta,  ticket.tasaVenta,  ticket.titulos, legacyTraderV),
+      estatus: "Booked/Corregido",
+    });
     setPlantillaSel("");
     setMostrarForm(true);
     setFilaExp(null);
   };
 
   const confirmarCorreccion = async () => {
-    if (!form.emisor || !form.titulos || !form.valorNominal || !form.pxCompra || !form.pxVenta || !form.compradorCp || !form.vendedorCp) return;
-    const tit = parseFloat(form.titulos);
-    if (errorTraders(form.tradersCompra, tit) || errorTraders(form.tradersVenta, tit)) return;
-    const tradersCompra = limpiarTraders(form.tradersCompra, tit);
-    const tradersVenta  = limpiarTraders(form.tradersVenta, tit);
+    const cpRows = legFilledRows(form.compradores), vtRows = legFilledRows(form.vendedores);
+    if (!form.emisor || !form.valorNominal || !cpRows.length || !vtRows.length) return;
+    if (legBalanceError()) return;
+    const compradores = buildLegRows(cpRows), vendedores = buildLegRows(vtRows);
+    const sumCp = legSum(compradores);
+    const allTraders = [...new Set([...compradores, ...vendedores].map(r => r.trader).filter(Boolean))];
     const updatedOp = { ...form, id: modoCorreccion.id,
-      titulos:           tit,
-      valorNominal:      parseFloat(form.valorNominal),
-      tipoCambio:        parseFloat(form.tipoCambio) || 1,
-      pxCompra:          parseFloat(form.pxCompra),
-      pxVenta:           parseFloat(form.pxVenta),
-      cupon:             parseFloat(form.cupon),
-      tasaCompra:        form.tasaCompra !== "" && form.tasaCompra != null ? parseFloat(form.tasaCompra) : null,
-      tasaVenta:         form.tasaVenta !== "" && form.tasaVenta != null ? parseFloat(form.tasaVenta) : null,
-      tradersCompra, tradersVenta,
-      operador:          [...new Set([...tradersCompra, ...tradersVenta].map(r => r.nombre))].join(", ") || form.operador || "",
-      fechaLiquidacion:  calcFechaLiquidacion(form.fecha, form.fechaValor),
-      estatus:           "Booked/Corregido",
+      titulos:          sumCp,
+      valorNominal:     parseFloat(form.valorNominal),
+      tipoCambio:       parseFloat(form.tipoCambio) || 1,
+      cupon:            parseFloat(form.cupon),
+      compradores, vendedores,
+      operador:         allTraders.join(", "),
+      fechaLiquidacion: calcFechaLiquidacion(form.fecha, form.fechaValor),
+      estatus:          "Booked/Corregido",
     };
     setOps(prev => prev.map(t => t.id === modoCorreccion.id ? updatedOp : t));
     await sb.from('operaciones').update(mapOpToDb(updatedOp)).eq('id', modoCorreccion.id);
@@ -545,10 +560,12 @@ export default function BlotterBondsINVEX() {
 
   const filtradas = useMemo(() => {
     let lista = enriquecidas;
-    if (filtroCp   !== "Todas") lista = lista.filter(t => t.compradorCp === filtroCp || t.vendedorCp === filtroCp);
+    const allCps = (t) => t.compradores?.length ? t.compradores.map(r=>r.contraparte) : [t.compradorCp||""];
+    const allVps = (t) => t.vendedores?.length  ? t.vendedores.map(r=>r.contraparte)  : [t.vendedorCp||""];
+    if (filtroCp   !== "Todas") lista = lista.filter(t => [...allCps(t),...allVps(t)].includes(filtroCp));
     if (filtroTipo !== "Todos") lista = lista.filter(t => t.tipo === filtroTipo);
     if (filtroMon  !== "Todas") lista = lista.filter(t => t.moneda === filtroMon);
-    if (busqueda) lista = lista.filter(t => [t.emisor, t.isin, t.id, t.compradorCp, t.vendedorCp].join(" ").toLowerCase().includes(busqueda.toLowerCase()));
+    if (busqueda) { const q = busqueda.toLowerCase(); lista = lista.filter(t => [t.emisor,t.isin,t.id,...allCps(t),...allVps(t)].join(" ").toLowerCase().includes(q)); }
     return [...lista].sort((a, b) => {
       let av = a[colOrden], bv = b[colOrden];
       if (typeof av === "string") { av = av.toLowerCase(); bv = bv.toLowerCase(); }
@@ -561,28 +578,44 @@ export default function BlotterBondsINVEX() {
 
   const reporteCp = useMemo(() => {
     const mapa = {};
+    const addCp = (nombre, rol, nom) => {
+      if (!nombre) return;
+      if (!mapa[nombre]) mapa[nombre] = { nombre, comoComprador: 0, comoVendedor: 0, ops: 0, nomCompra: 0, nomVenta: 0 };
+      mapa[nombre].ops++;
+      if (rol === "compra") { mapa[nombre].comoComprador++; mapa[nombre].nomCompra += nom; }
+      else                  { mapa[nombre].comoVendedor++;  mapa[nombre].nomVenta  += nom; }
+    };
     enriquecidas.forEach(t => {
-      [["compra", t.compradorCp, t.nominal], ["venta", t.vendedorCp, t.nominal]].forEach(([rol, nombre, nom]) => {
-        if (!mapa[nombre]) mapa[nombre] = { nombre, comoComprador: 0, comoVendedor: 0, ops: 0, nomCompra: 0, nomVenta: 0 };
-        mapa[nombre].ops++;
-        if (rol === "compra") { mapa[nombre].comoComprador++; mapa[nombre].nomCompra += nom; }
-        else                  { mapa[nombre].comoVendedor++;  mapa[nombre].nomVenta  += nom; }
-      });
+      if (t.compradores?.length) {
+        const totTit = t.compradores.reduce((s,r)=>s+(Number(r.titulos)||0),0);
+        t.compradores.forEach(r => addCp(r.contraparte, "compra", t.nominal * (Number(r.titulos)||0) / (totTit||1)));
+      } else { addCp(t.compradorCp, "compra", t.nominal); }
+      if (t.vendedores?.length) {
+        const totTit = t.vendedores.reduce((s,r)=>s+(Number(r.titulos)||0),0);
+        t.vendedores.forEach(r => addCp(r.contraparte, "venta", t.nominal * (Number(r.titulos)||0) / (totTit||1)));
+      } else { addCp(t.vendedorCp, "venta", t.nominal); }
     });
     return Object.values(mapa).sort((a, b) => (b.nomCompra + b.nomVenta) - (a.nomCompra + a.nomVenta));
   }, [enriquecidas]);
 
-  // Peso de un trader en una operación: cada leg (compra/venta) vale 50% del P&L,
-  // repartido dentro del leg en proporción a los títulos asignados.
-  // Trades sin asignación por legs caen 100% al campo legacy `operador`.
+  // Peso de un trader: cada leg vale 50% del P&L, repartido por títulos dentro del leg.
   const pesoTrader = (t, nombre) => {
-    const tc = t.tradersCompra || [], tv = t.tradersVenta || [];
-    if (!tc.length && !tv.length) return (t.operador || "Sin asignar") === nombre ? 1 : 0;
+    if (t.compradores?.length || t.vendedores?.length) {
+      const legW = (lista) => {
+        const tot = lista.reduce((s, r) => s + (Number(r.titulos)||0), 0);
+        if (!lista.length || !tot) return 0;
+        return lista.filter(r => r.trader === nombre).reduce((s, r) => s + 0.5*(Number(r.titulos)||0)/tot, 0);
+      };
+      return legW(t.compradores||[]) + legW(t.vendedores||[]);
+    }
+    // legacy tradersCompra/tradersVenta
+    const tc = t.tradersCompra||[], tv = t.tradersVenta||[];
+    if (!tc.length && !tv.length) return (t.operador||"Sin asignar") === nombre ? 1 : 0;
     const legW = (lista) => {
-      const tot = lista.reduce((s, r) => s + (Number(r.titulos) || 0), 0);
+      const tot = lista.reduce((s, r) => s + (Number(r.titulos)||0), 0);
       if (!lista.length || !tot) return nombre === "Sin asignar" ? 0.5 : 0;
       const r = lista.find(x => x.nombre === nombre);
-      return r ? 0.5 * (Number(r.titulos) || 0) / tot : 0;
+      return r ? 0.5*(Number(r.titulos)||0)/tot : 0;
     };
     return legW(tc) + legW(tv);
   };
@@ -593,15 +626,23 @@ export default function BlotterBondsINVEX() {
       if (!mapa[k]) mapa[k] = { operador: k, ops: 0, opIds: new Set(), nominal: 0, pnl: 0, totalDif: 0, peso: 0 };
       const m = mapa[k];
       if (!m.opIds.has(t.id)) { m.opIds.add(t.id); m.ops++; }
-      m.nominal += t.nominal * w; m.pnl += t.pnl * w; m.totalDif += t.diferencial * w; m.peso += w;
+      m.nominal += t.nominal*w; m.pnl += t.pnl*w; m.totalDif += t.diferencial*w; m.peso += w;
     };
     enriquecidas.forEach(t => {
-      const tc = t.tradersCompra || [], tv = t.tradersVenta || [];
-      if (!tc.length && !tv.length) { add(t.operador || "Sin asignar", 1, t); return; }
+      if (t.compradores?.length || t.vendedores?.length) {
+        [t.compradores||[], t.vendedores||[]].forEach(lista => {
+          const tot = lista.reduce((s,r)=>s+(Number(r.titulos)||0),0);
+          if (!lista.length||!tot) { add("Sin asignar", 0.5, t); return; }
+          lista.forEach(r => add(r.trader||"Sin asignar", 0.5*(Number(r.titulos)||0)/tot, t));
+        });
+        return;
+      }
+      const tc = t.tradersCompra||[], tv = t.tradersVenta||[];
+      if (!tc.length && !tv.length) { add(t.operador||"Sin asignar", 1, t); return; }
       [tc, tv].forEach(lista => {
-        const tot = lista.reduce((s, r) => s + (Number(r.titulos) || 0), 0);
-        if (!lista.length || !tot) { add("Sin asignar", 0.5, t); return; }
-        lista.forEach(r => add(r.nombre, 0.5 * (Number(r.titulos) || 0) / tot, t));
+        const tot = lista.reduce((s,r)=>s+(Number(r.titulos)||0),0);
+        if (!lista.length||!tot) { add("Sin asignar", 0.5, t); return; }
+        lista.forEach(r => add(r.nombre, 0.5*(Number(r.titulos)||0)/tot, t));
       });
     });
     return Object.values(mapa).sort((a, b) => b.pnl - a.pnl);
@@ -912,17 +953,25 @@ export default function BlotterBondsINVEX() {
                     <td className="td" style={{ textAlign: "right", color: "#8a7050" }}>{t.valorNominal ? fmt(t.valorNominal, 0) : "-"}</td>
                     {/* Compra */}
                     <td className="td">
-                      <div style={{ color: "#1a7a3a", fontWeight: 600, fontSize: 11 }}>{t.compradorCp}</div>
-                      <div style={{ color: "#b0d8b8", fontSize: 9 }}>COMPRADOR</div>
+                      {t.compradores?.length > 1
+                        ? t.compradores.map((r,i) => <div key={i} style={{ color: "#1a7a3a", fontWeight: 600, fontSize: 10 }}>{r.contraparte}</div>)
+                        : <><div style={{ color: "#1a7a3a", fontWeight: 600, fontSize: 11 }}>{t.compradorCp}</div><div style={{ color: "#b0d8b8", fontSize: 9 }}>COMPRADOR</div></>
+                      }
                     </td>
-                    <td className="td" style={{ textAlign: "right", color: "#1a7a3a", fontWeight: 800, fontSize: 12 }}>{fmt(t.pxCompra,4)}</td>
+                    <td className="td" style={{ textAlign: "right", color: "#1a7a3a", fontWeight: 800, fontSize: 12 }}>
+                      {t.compradores?.length > 1 ? t.compradores.map((r,i)=><div key={i}>{fmt(r.px,4)}</div>) : fmt(t.pxCompra,4)}
+                    </td>
                     <td className="td" style={{ textAlign: "right", color: "#1a7a3a", fontWeight: 700, fontSize: 11 }}>MX${fmt(t.importeCompraMXN,0)}</td>
                     {/* Venta */}
                     <td className="td">
-                      <div style={{ color: "#c02020", fontWeight: 600, fontSize: 11 }}>{t.vendedorCp}</div>
-                      <div style={{ color: "#301418", fontSize: 9 }}>VENDEDOR</div>
+                      {t.vendedores?.length > 1
+                        ? t.vendedores.map((r,i) => <div key={i} style={{ color: "#c02020", fontWeight: 600, fontSize: 10 }}>{r.contraparte}</div>)
+                        : <><div style={{ color: "#c02020", fontWeight: 600, fontSize: 11 }}>{t.vendedorCp}</div><div style={{ color: "#301418", fontSize: 9 }}>VENDEDOR</div></>
+                      }
                     </td>
-                    <td className="td" style={{ textAlign: "right", color: "#c02020", fontWeight: 800, fontSize: 12 }}>{fmt(t.pxVenta,4)}</td>
+                    <td className="td" style={{ textAlign: "right", color: "#c02020", fontWeight: 800, fontSize: 12 }}>
+                      {t.vendedores?.length > 1 ? t.vendedores.map((r,i)=><div key={i}>{fmt(r.px,4)}</div>) : fmt(t.pxVenta,4)}
+                    </td>
                     <td className="td" style={{ textAlign: "right", color: "#c02020", fontWeight: 700, fontSize: 11 }}>MX${fmt(t.importeVentaMXN,0)}</td>
                     {/* Diferencial y P&L */}
                     <td className="td" style={{ textAlign: "right" }}>
@@ -930,10 +979,15 @@ export default function BlotterBondsINVEX() {
                     </td>
                     <td className="td" style={{ textAlign: "right", fontWeight: 900, fontSize: 13, color: pnlColor(t.pnl) }}>MX${fmt(t.pnl,0)}</td>
                     <td className="td" style={{ color: "#8a7050", fontSize: 10 }}>
-                      {(t.tradersCompra?.length || t.tradersVenta?.length) ? (
+                      {(t.compradores?.length || t.vendedores?.length) ? (
                         <>
-                          {t.tradersCompra?.length > 0 && <div style={{ color: "#1a7a3a" }}>C: {t.tradersCompra.map(r=>r.nombre).join(", ")}</div>}
-                          {t.tradersVenta?.length > 0 && <div style={{ color: "#c02020" }}>V: {t.tradersVenta.map(r=>r.nombre).join(", ")}</div>}
+                          {[...(t.compradores||[]).filter(r=>r.trader).map(r=><div key={"c"+r.contraparte} style={{color:"#1a7a3a"}}>C {r.contraparte.split(" ")[0]}: {r.trader}</div>),
+                             ...(t.vendedores||[]).filter(r=>r.trader).map(r=><div key={"v"+r.contraparte} style={{color:"#c02020"}}>V {r.contraparte.split(" ")[0]}: {r.trader}</div>)]}
+                        </>
+                      ) : (t.tradersCompra?.length || t.tradersVenta?.length) ? (
+                        <>
+                          {t.tradersCompra?.length > 0 && <div style={{color:"#1a7a3a"}}>C: {t.tradersCompra.map(r=>r.nombre).join(", ")}</div>}
+                          {t.tradersVenta?.length  > 0 && <div style={{color:"#c02020"}}>V: {t.tradersVenta.map(r=>r.nombre).join(", ")}</div>}
                         </>
                       ) : t.operador}
                     </td>
@@ -944,36 +998,52 @@ export default function BlotterBondsINVEX() {
                   {filaExp === t.id && (
                     <tr key={t.id+"-x"} style={{ background: "#f5f0e8" }}>
                       <td colSpan={17} style={{ padding: "14px 16px 16px" }}>
-                        <div style={{ display: "grid", gridTemplateColumns: "1fr 70px 1fr 1fr", gap: 12 }}>
+                        <div style={{ display: "grid", gridTemplateColumns: "1fr 60px 1fr 1fr", gap: 12 }}>
+                          {/* COMPRADORES */}
                           <div style={{ background: "#f0faf4", border: "1px solid #143020", borderRadius: 4, padding: 14 }}>
-                            <div className="lbl" style={{ color: "#1a7a3a", marginBottom: 8 }}>▲ Comprador — Paga al Desk</div>
-                            <div style={{ color: "#1a7a3a", fontWeight: 800, fontSize: 14 }}>{t.compradorCp}</div>
-                            <div style={{ fontSize: 20, fontWeight: 900, color: "#1a7a3a", margin: "4px 0 2px" }}>{fmt(t.pxCompra,4)} <span style={{fontSize:10,color:"#3a6040"}}>px sucio</span></div>
-                            <div style={{ fontSize: 11, color: "#1a7a3a", fontWeight: 700 }}>Importe: {fmtMon(t.importeCompra, t.moneda)}</div>
-                            {t.moneda!=="MXN"&&<div style={{ fontSize: 10, color: "#3a6040" }}>= MX${fmt(t.importeCompraMXN,0)} · TC {fmt(t.tipoCambio,4)}</div>}
-                            {t.tradersCompra?.length > 0 && (
-                              <div style={{ marginTop: 8, paddingTop: 8, borderTop: "1px solid #c8e0d0", fontSize: 10, color: "#3a6040" }}>
-                                {t.tradersCompra.map(r => <div key={r.nombre}>👤 {r.nombre}: {Number(r.titulos).toLocaleString("es-MX")} títulos ({fmt(Number(r.titulos)/t.titulos*100,0)}%)</div>)}
-                              </div>
-                            )}
+                            <div className="lbl" style={{ color: "#1a7a3a", marginBottom: 8 }}>▲ Compradores — Pagan al Desk</div>
+                            {(t.compradores?.length ? t.compradores : [{ contraparte: t.compradorCp, titulos: t.titulos, px: t.pxCompra, tasa: t.tasaCompra, trader: t.tradersCompra?.[0]?.nombre }]).map((r,i) => {
+                              const imp = (Number(r.px)||0)*(Number(r.titulos)||0);
+                              return (
+                                <div key={i} style={{ marginBottom: i < (t.compradores?.length||1)-1 ? 10 : 0, paddingBottom: i < (t.compradores?.length||1)-1 ? 10 : 0, borderBottom: i < (t.compradores?.length||1)-1 ? "1px solid #c8e0d0" : "none" }}>
+                                  <div style={{ color: "#1a7a3a", fontWeight: 700, fontSize: 12 }}>{r.contraparte}</div>
+                                  <div style={{ fontSize: 13, fontWeight: 900, color: "#1a7a3a" }}>{fmt(r.px,4)} <span style={{fontSize:9,color:"#3a6040"}}>px</span></div>
+                                  <div style={{ fontSize: 10, color: "#1a7a3a" }}>{Number(r.titulos).toLocaleString("es-MX")} títulos · {fmtMon(imp, t.moneda)}</div>
+                                  {r.tasa != null && <div style={{ fontSize: 9, color: "#3a6040" }}>Tasa: {r.tasa}%</div>}
+                                  {r.trader && <div style={{ fontSize: 9, color: "#3a6040" }}>👤 {r.trader}</div>}
+                                </div>
+                              );
+                            })}
+                            <div style={{ marginTop: 8, paddingTop: 8, borderTop: "1px solid #c8e0d0", fontSize: 10, color: "#1a7a3a", fontWeight: 700 }}>
+                              Total: {fmtMon(t.importeCompra, t.moneda)}{t.moneda!=="MXN"&&` = MX$${fmt(t.importeCompraMXN,0)}`}
+                            </div>
                           </div>
+                          {/* CENTER */}
                           <div style={{ display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", background: "#f5f2ee", border: "1px solid #d8ceb8", borderRadius: 4, gap: 3 }}>
                             <div style={{ fontSize: 18, color: "#9C0033" }}>⇄</div>
                             <div style={{ fontSize: 11, fontWeight: 900, color: pnlColor(t.diferencial) }}>{fmtDif(t.diferencial,4)}</div>
                             <div style={{ fontSize: 9, color: "#60500a" }}>pts</div>
                           </div>
+                          {/* VENDEDORES */}
                           <div style={{ background: "#fff5f5", border: "1px solid #f0c0c0", borderRadius: 4, padding: 14 }}>
-                            <div className="lbl" style={{ color: "#c02020", marginBottom: 8 }}>▼ Vendedor — Recibe del Desk</div>
-                            <div style={{ color: "#c02020", fontWeight: 800, fontSize: 14 }}>{t.vendedorCp}</div>
-                            <div style={{ fontSize: 20, fontWeight: 900, color: "#c02020", margin: "4px 0 2px" }}>{fmt(t.pxVenta,4)} <span style={{fontSize:10,color:"#603040"}}>px sucio</span></div>
-                            <div style={{ fontSize: 11, color: "#c02020", fontWeight: 700 }}>Importe: {fmtMon(t.importeVenta, t.moneda)}</div>
-                            {t.moneda!=="MXN"&&<div style={{ fontSize: 10, color: "#603040" }}>= MX${fmt(t.importeVentaMXN,0)} · TC {fmt(t.tipoCambio,4)}</div>}
-                            {t.tradersVenta?.length > 0 && (
-                              <div style={{ marginTop: 8, paddingTop: 8, borderTop: "1px solid #ecd0d0", fontSize: 10, color: "#603040" }}>
-                                {t.tradersVenta.map(r => <div key={r.nombre}>👤 {r.nombre}: {Number(r.titulos).toLocaleString("es-MX")} títulos ({fmt(Number(r.titulos)/t.titulos*100,0)}%)</div>)}
-                              </div>
-                            )}
+                            <div className="lbl" style={{ color: "#c02020", marginBottom: 8 }}>▼ Vendedores — Reciben del Desk</div>
+                            {(t.vendedores?.length ? t.vendedores : [{ contraparte: t.vendedorCp, titulos: t.titulos, px: t.pxVenta, tasa: t.tasaVenta, trader: t.tradersVenta?.[0]?.nombre }]).map((r,i) => {
+                              const imp = (Number(r.px)||0)*(Number(r.titulos)||0);
+                              return (
+                                <div key={i} style={{ marginBottom: i < (t.vendedores?.length||1)-1 ? 10 : 0, paddingBottom: i < (t.vendedores?.length||1)-1 ? 10 : 0, borderBottom: i < (t.vendedores?.length||1)-1 ? "1px solid #ecd0d0" : "none" }}>
+                                  <div style={{ color: "#c02020", fontWeight: 700, fontSize: 12 }}>{r.contraparte}</div>
+                                  <div style={{ fontSize: 13, fontWeight: 900, color: "#c02020" }}>{fmt(r.px,4)} <span style={{fontSize:9,color:"#603040"}}>px</span></div>
+                                  <div style={{ fontSize: 10, color: "#c02020" }}>{Number(r.titulos).toLocaleString("es-MX")} títulos · {fmtMon(imp, t.moneda)}</div>
+                                  {r.tasa != null && <div style={{ fontSize: 9, color: "#603040" }}>Tasa: {r.tasa}%</div>}
+                                  {r.trader && <div style={{ fontSize: 9, color: "#603040" }}>👤 {r.trader}</div>}
+                                </div>
+                              );
+                            })}
+                            <div style={{ marginTop: 8, paddingTop: 8, borderTop: "1px solid #ecd0d0", fontSize: 10, color: "#c02020", fontWeight: 700 }}>
+                              Total: {fmtMon(t.importeVenta, t.moneda)}{t.moneda!=="MXN"&&` = MX$${fmt(t.importeVentaMXN,0)}`}
+                            </div>
                           </div>
+                          {/* P&L */}
                           <div style={{ background: "#f5fff8", border: "1px solid #b8dcc8", borderRadius: 4, padding: 14 }}>
                             <div className="lbl" style={{ color: pnlColor(t.pnl), marginBottom: 8 }}>{t.pnl >= 0 ? "Ingreso" : "Pérdida"} de Agencia (MXN)</div>
                             <div style={{ fontSize: 22, fontWeight: 900, color: pnlColor(t.pnl), margin: "4px 0 4px" }}>MX${fmt(t.pnl,0)}</div>
@@ -1233,9 +1303,9 @@ export default function BlotterBondsINVEX() {
                     <div key={t.id} style={{display:"flex",justifyContent:"space-between",padding:"5px 0",borderBottom:"1px solid #e0d4b8",fontSize:10,gap:6}}>
                       <span style={{color:"#9C0033",minWidth:70}}>{t.id}</span>
                       <span style={{color:"#8a7050",flex:1,overflow:"hidden",textOverflow:"ellipsis"}}>{t.emisor}</span>
-                      <span style={{color:"#1a7a3a"}}>{t.compradorCp.split(" ")[0]}</span>
+                      <span style={{color:"#1a7a3a"}}>{t.compradorCp?.split(" ")[0]||""}</span>
                       <span style={{color:"#9C0033"}}>→</span>
-                      <span style={{color:"#c02020"}}>{t.vendedorCp.split(" ")[0]}</span>
+                      <span style={{color:"#c02020"}}>{t.vendedorCp?.split(" ")[0]||""}</span>
                       {w<1&&<span style={{color:"#8a7050",minWidth:32,textAlign:"right"}}>{fmt(w*100,0)}%</span>}
                       <span style={{color:pnlColor(t.pnl*w),fontWeight:800,minWidth:70,textAlign:"right"}}>MX${fmt(t.pnl*w,0)}</span>
                     </div>
@@ -1725,16 +1795,12 @@ export default function BlotterBondsINVEX() {
                   </div>
                 )}
               </div>
-              {/* Títulos, Valor Nominal, Tipo de Cambio */}
-              <div style={{display:"grid",gridTemplateColumns:form.moneda!=="MXN"?"1fr 1fr 1fr":"1fr 1fr",gap:12,marginBottom:20}}>
-                <div>
-                  <div className="lbl">Títulos</div>
-                  <input type="number" placeholder="200000" value={form.titulos} onChange={e=>sF("titulos",e.target.value)}/>
-                </div>
+              {/* Valor Nominal, Tipo de Cambio — Títulos now captured per-client row in legs */}
+              <div style={{display:"grid",gridTemplateColumns:form.moneda!=="MXN"?"1fr 1fr":"1fr 1fr",gap:12,marginBottom:20}}>
                 <div>
                   <div className="lbl">Valor Nominal por Título</div>
                   <input type="number" step="any" placeholder="100" value={form.valorNominal} onChange={e=>sF("valorNominal",e.target.value)}/>
-                  {form.titulos&&form.valorNominal&&<div style={{fontSize:9,color:"#8a7050",marginTop:4}}>Nominal total: {fmtMon(parseFloat(form.titulos)*parseFloat(form.valorNominal),form.moneda)}</div>}
+                  {(() => { const tit = legSum(legFilledRows(form.compradores)); return tit&&form.valorNominal ? <div style={{fontSize:9,color:"#8a7050",marginTop:4}}>Nominal total: {fmtMon(tit*parseFloat(form.valorNominal),form.moneda)}</div> : null; })()}
                 </div>
                 {form.moneda!=="MXN"&&(
                   <div>
@@ -1746,112 +1812,104 @@ export default function BlotterBondsINVEX() {
               <hr className="hr" style={{marginBottom:18}}/>
 
               <div style={{fontSize:9,color:"#9C0033",letterSpacing:2,textTransform:"uppercase",marginBottom:12}}>Precios de Agencia</div>
-              <div style={{display:"grid",gridTemplateColumns:"1fr 70px 1fr",marginBottom:18}}>
-                <div style={{background:"#f0faf4",border:"1px solid #143020",borderRadius:"4px 0 0 4px",padding:16}}>
-                  <div style={{fontSize:9,color:"#1a7a3a",letterSpacing:2,fontWeight:800,textTransform:"uppercase",marginBottom:12,display:"flex",gap:6,alignItems:"center"}}>
-                    <span style={{width:8,height:8,borderRadius:"50%",background:"#1a7a3a",display:"inline-block"}}/> Comprador — paga al desk
-                  </div>
-                  <div style={{marginBottom:10}}>
-                    <div className="lbl">Contraparte Compradora</div>
-                    <select value={form.compradorCp} onChange={e=>sF("compradorCp",e.target.value)} style={{borderColor:"#b0d8b8"}}>
-                      <option value="">Selecciona comprador…</option>
-                      {contrapartes.map(c=><option key={c}>{c}</option>)}
-                    </select>
-                  </div>
-                  <div>
-                    <div className="lbl">Px Sucio Compra (por título)</div>
-                    <input type="number" step="0.0001" placeholder="987.5000" value={form.pxCompra} onChange={e=>sF("pxCompra",e.target.value)} style={{borderColor:"#b0d8b8"}}/>
-                    {form.pxCompra&&form.titulos&&(()=>{
-                      const imp=parseFloat(form.pxCompra)*parseFloat(form.titulos);
-                      const impMXN=imp*(parseFloat(form.tipoCambio)||1);
-                      return(<div style={{fontSize:9,color:"rgba(61,220,132,.6)",marginTop:4}}>
-                        Importe: {fmtMon(imp,form.moneda)}{form.moneda!=="MXN"&&` = MX$${fmt(impMXN,0)}`}
-                      </div>);
-                    })()}
-                  </div>
-                  <div style={{marginTop:10}}>
-                    <div className="lbl">Tasa Dealt Compra (%)</div>
-                    <input type="number" step="0.001" placeholder="9.250" value={form.tasaCompra} onChange={e=>sF("tasaCompra",e.target.value)} style={{borderColor:"#b0d8b8"}}/>
-                  </div>
-                  {renderTradersLeg("tradersCompra","#b0d8b8")}
-                </div>
-                <div style={{display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",background:"#f5f2ee",borderTop:"1px solid #d8ceb8",borderBottom:"1px solid #d8ceb8",gap:4}}>
-                  <div style={{fontSize:20,color:"#9C0033"}}>⇒</div>
-                  {form.pxCompra&&form.pxVenta&&(()=>{
-                    const dif=parseFloat(form.pxCompra)-parseFloat(form.pxVenta);
-                    const pos=dif>=0;
-                    return(
-                      <div style={{fontSize:11,fontWeight:900,color:pos?"#9C0033":"#c02020",textAlign:"center",lineHeight:1.3}}>
-                        {pos?"+":""}{fmt(dif,3)}<br/>
-                        <span style={{fontSize:9,color:pos?"rgba(251,191,36,.5)":"rgba(248,113,113,.5)"}}>pts</span>
-                      </div>
-                    );
-                  })()}
-                </div>
-                <div style={{background:"#fff5f5",border:"1px solid #f0c0c0",borderRadius:"0 4px 4px 0",padding:16}}>
-                  <div style={{fontSize:9,color:"#c02020",letterSpacing:2,fontWeight:800,textTransform:"uppercase",marginBottom:12,display:"flex",gap:6,alignItems:"center"}}>
-                    <span style={{width:8,height:8,borderRadius:"50%",background:"#c02020",display:"inline-block"}}/> Vendedor — recibe del desk
-                  </div>
-                  <div style={{marginBottom:10}}>
-                    <div className="lbl">Contraparte Vendedora</div>
-                    <select value={form.vendedorCp} onChange={e=>sF("vendedorCp",e.target.value)} style={{borderColor:"#e8a0a0"}}>
-                      <option value="">Selecciona vendedor…</option>
-                      {contrapartes.map(c=><option key={c}>{c}</option>)}
-                    </select>
-                  </div>
-                  <div>
-                    <div className="lbl">Px Sucio Venta (por título)</div>
-                    <input type="number" step="0.0001" placeholder="984.2500" value={form.pxVenta} onChange={e=>sF("pxVenta",e.target.value)} style={{borderColor:"#e8a0a0"}}/>
-                    {form.pxVenta&&form.titulos&&(()=>{
-                      const imp=parseFloat(form.pxVenta)*parseFloat(form.titulos);
-                      const impMXN=imp*(parseFloat(form.tipoCambio)||1);
-                      return(<div style={{fontSize:9,color:"rgba(248,113,113,.6)",marginTop:4}}>
-                        Importe: {fmtMon(imp,form.moneda)}{form.moneda!=="MXN"&&` = MX$${fmt(impMXN,0)}`}
-                      </div>);
-                    })()}
-                  </div>
-                  <div style={{marginTop:10}}>
-                    <div className="lbl">Tasa Dealt Venta (%)</div>
-                    <input type="number" step="0.001" placeholder="9.180" value={form.tasaVenta} onChange={e=>sF("tasaVenta",e.target.value)} style={{borderColor:"#e8a0a0"}}/>
-                  </div>
-                  {renderTradersLeg("tradersVenta","#e8a0a0")}
-                </div>
-              </div>
 
-              {form.pxCompra&&form.pxVenta&&form.titulos&&(()=>{
-                const pc=parseFloat(form.pxCompra), pv=parseFloat(form.pxVenta);
-                const tit=parseFloat(form.titulos);
-                const tc=parseFloat(form.tipoCambio)||1;
-                const impCpa=pc*tit, impVta=pv*tit;
-                const pnlMon=impCpa-impVta, pnlMXN=pnlMon*tc;
-                const dif=pc-pv, pos=dif>=0;
-                return(
-                  <div style={{background:pos?"#f0fff8":"#fff0f0",border:`1px solid ${pos?"#a0d8b8":"#e8b0b0"}`,borderRadius:4,padding:"12px 18px",marginBottom:18}}>
-                    <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:8}}>
-                      <span style={{fontSize:9,color:pos?"#1a7a3a":"#c02020",letterSpacing:2,textTransform:"uppercase"}}>Vista Previa — {pos?"Ingreso":"Pérdida"} de Agencia</span>
-                      <span style={{fontSize:10,color:"#9C0033"}}>Diferencial: {pos?"+":""}{fmt(dif,4)} pts · {pos?"+":""}{fmt(dif*100,2)} bps</span>
+              {/* LEG HEADERS */}
+              {(() => {
+                const colHdr = (label, accent) => (
+                  <div style={{fontSize:9,color:accent,letterSpacing:1,fontWeight:700,padding:"2px 0"}}>{label}</div>
+                );
+                const renderLeg = (leg, accent, borderColor, bg) => {
+                  const rows = form[leg];
+                  const filled = legFilledRows(rows);
+                  const totTit = legSum(filled), totImp = legImporte(filled), tc = parseFloat(form.tipoCambio)||1;
+                  return (
+                    <div style={{background:bg,border:`1px solid ${borderColor}`,borderRadius:4,padding:14,marginBottom:10}}>
+                      <div style={{fontSize:9,color:accent,letterSpacing:2,fontWeight:800,textTransform:"uppercase",marginBottom:10,display:"flex",gap:6,alignItems:"center"}}>
+                        <span style={{width:8,height:8,borderRadius:"50%",background:accent,display:"inline-block"}}/>
+                        {leg==="compradores" ? "Compradores — pagan al desk" : "Vendedores — reciben del desk"}
+                      </div>
+                      {/* Column labels */}
+                      <div style={{display:"grid",gridTemplateColumns:"2fr 1fr 1.2fr 0.9fr 1.3fr 28px",gap:5,marginBottom:4}}>
+                        {["Contraparte","Títulos","Px Sucio","Tasa %","Trader",""].map((l,i)=><div key={i} style={{fontSize:8,color:"#8a7050",letterSpacing:1,textTransform:"uppercase"}}>{l}</div>)}
+                      </div>
+                      {rows.map((r,i) => {
+                        const imp = (parseFloat(r.px)||0)*(parseFloat(r.titulos)||0);
+                        return (
+                          <div key={i} style={{marginBottom:6}}>
+                            <div style={{display:"grid",gridTemplateColumns:"2fr 1fr 1.2fr 0.9fr 1.3fr 28px",gap:5}}>
+                              <select value={r.contraparte} onChange={e=>setLeg(leg,i,"contraparte",e.target.value)} style={{borderColor,fontSize:11}}>
+                                <option value="">Contraparte…</option>
+                                {contrapartes.map(c=><option key={c}>{c}</option>)}
+                              </select>
+                              <input type="number" placeholder="0" value={r.titulos} onChange={e=>setLeg(leg,i,"titulos",e.target.value)} style={{borderColor,fontSize:11}}/>
+                              <input type="number" step="0.0001" placeholder="100.0000" value={r.px} onChange={e=>setLeg(leg,i,"px",e.target.value)} style={{borderColor,fontSize:11}}/>
+                              <input type="number" step="0.001" placeholder="9.250" value={r.tasa} onChange={e=>setLeg(leg,i,"tasa",e.target.value)} style={{borderColor,fontSize:11}}/>
+                              <select value={r.trader} onChange={e=>setLeg(leg,i,"trader",e.target.value)} style={{borderColor,fontSize:11}}>
+                                <option value="">Trader…</option>
+                                {operadores.map(o=><option key={o}>{o}</option>)}
+                              </select>
+                              <button onClick={()=>removeLeg(leg,i)} style={{background:"none",border:"1px solid #d8ceb8",borderRadius:3,cursor:"pointer",color:"#8a7050",padding:0,fontFamily:"inherit",fontSize:12}}>✕</button>
+                            </div>
+                            {r.px&&r.titulos&&<div style={{fontSize:8,color:accent,marginTop:2,paddingLeft:2}}>Importe: {fmtMon(imp,form.moneda)}{form.moneda!=="MXN"&&` = MX$${fmt(imp*tc,0)}`}</div>}
+                          </div>
+                        );
+                      })}
+                      <button onClick={()=>addLeg(leg)} style={{background:"none",border:`1px dashed ${accent}`,borderRadius:3,cursor:"pointer",color:"#8a7050",fontSize:10,padding:"4px 10px",fontFamily:"inherit",width:"100%",marginTop:2}}>＋ agregar {leg==="compradores"?"comprador":"vendedor"}</button>
+                      {totTit>0&&<div style={{fontSize:9,color:accent,marginTop:6,fontWeight:700}}>Total: {totTit.toLocaleString("es-MX")} títulos · {fmtMon(totImp,form.moneda)}{form.moneda!=="MXN"&&` = MX$${fmt(totImp*tc,0)}`}</div>}
                     </div>
-                    <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:12}}>
-                      <div><div style={{fontSize:9,color:"#8a7050",letterSpacing:1.5,textTransform:"uppercase",marginBottom:3}}>Importe Compra</div>
-                        <div style={{fontSize:12,color:"#1a7a3a",fontWeight:700}}>{fmtMon(impCpa,form.moneda)}</div>
-                        {form.moneda!=="MXN"&&<div style={{fontSize:9,color:"rgba(61,220,132,.5)"}}>MX${fmt(impCpa*tc,0)}</div>}
+                  );
+                };
+                const balErr = legBalanceError();
+                const cpFilled = legFilledRows(form.compradores), vtFilled = legFilledRows(form.vendedores);
+                const impCpa = legImporte(cpFilled), impVta = legImporte(vtFilled);
+                const tc = parseFloat(form.tipoCambio)||1;
+                const pnlMon = impCpa - impVta, pnlMXN = pnlMon * tc;
+                const dif = cpFilled.length&&vtFilled.length ? legSum(cpFilled) ? (impCpa/legSum(cpFilled)) - (legSum(vtFilled) ? impVta/legSum(vtFilled) : 0) : 0 : 0;
+                const pos = pnlMXN >= 0;
+                return (
+                  <>
+                    <div style={{display:"grid",gridTemplateColumns:"1fr 60px 1fr",gap:10,marginBottom:16}}>
+                      {renderLeg("compradores","#1a7a3a","#143020","#f0faf4")}
+                      <div style={{display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",background:"#f5f2ee",border:"1px solid #d8ceb8",borderRadius:4,gap:4}}>
+                        <div style={{fontSize:18,color:"#9C0033"}}>⇒</div>
+                        {dif!==0&&<div style={{fontSize:10,fontWeight:900,color:pnlColor(dif),textAlign:"center",lineHeight:1.3}}>{fmtDif(dif,3)}<br/><span style={{fontSize:8,color:"#8a7050"}}>pts</span></div>}
+                        {balErr&&<div style={{fontSize:8,color:"#c02020",textAlign:"center",padding:"0 4px"}}>⚠ {balErr}</div>}
                       </div>
-                      <div><div style={{fontSize:9,color:"#8a7050",letterSpacing:1.5,textTransform:"uppercase",marginBottom:3}}>Importe Venta</div>
-                        <div style={{fontSize:12,color:"#c02020",fontWeight:700}}>{fmtMon(impVta,form.moneda)}</div>
-                        {form.moneda!=="MXN"&&<div style={{fontSize:9,color:"rgba(248,113,113,.5)"}}>MX${fmt(impVta*tc,0)}</div>}
-                      </div>
-                      <div><div style={{fontSize:9,color:"#8a7050",letterSpacing:1.5,textTransform:"uppercase",marginBottom:3}}>P&L Agencia (MXN)</div>
-                        <div style={{fontSize:18,fontWeight:900,color:pos?"#1a7a3a":"#c02020"}}>{pos?"+":""}MX${fmt(pnlMXN,0)}</div>
-                        {form.moneda!=="MXN"&&<div style={{fontSize:9,color:"#8a7050"}}>{pos?"+":""}{fmtMon(pnlMon,form.moneda)} × TC {fmt(tc,4)}</div>}
-                      </div>
+                      {renderLeg("vendedores","#c02020","#f0c0c0","#fff5f5")}
                     </div>
-                  </div>
+                    {impCpa>0&&impVta>0&&(
+                      <div style={{background:pos?"#f0fff8":"#fff0f0",border:`1px solid ${pos?"#a0d8b8":"#e8b0b0"}`,borderRadius:4,padding:"12px 18px",marginBottom:18}}>
+                        <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:8}}>
+                          <span style={{fontSize:9,color:pos?"#1a7a3a":"#c02020",letterSpacing:2,textTransform:"uppercase"}}>Vista Previa — {pos?"Ingreso":"Pérdida"} de Agencia</span>
+                          {dif!==0&&<span style={{fontSize:10,color:"#9C0033"}}>Dif. promedio: {pos?"+":""}{fmt(dif,4)} pts · {pos?"+":""}{fmt(dif*100,2)} bps</span>}
+                        </div>
+                        <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:12}}>
+                          <div>
+                            <div style={{fontSize:9,color:"#8a7050",letterSpacing:1.5,textTransform:"uppercase",marginBottom:3}}>Importe Compra</div>
+                            <div style={{fontSize:12,color:"#1a7a3a",fontWeight:700}}>{fmtMon(impCpa,form.moneda)}</div>
+                            {form.moneda!=="MXN"&&<div style={{fontSize:9,color:"rgba(61,220,132,.5)"}}>MX${fmt(impCpa*tc,0)}</div>}
+                          </div>
+                          <div>
+                            <div style={{fontSize:9,color:"#8a7050",letterSpacing:1.5,textTransform:"uppercase",marginBottom:3}}>Importe Venta</div>
+                            <div style={{fontSize:12,color:"#c02020",fontWeight:700}}>{fmtMon(impVta,form.moneda)}</div>
+                            {form.moneda!=="MXN"&&<div style={{fontSize:9,color:"rgba(248,113,113,.5)"}}>MX${fmt(impVta*tc,0)}</div>}
+                          </div>
+                          <div>
+                            <div style={{fontSize:9,color:"#8a7050",letterSpacing:1.5,textTransform:"uppercase",marginBottom:3}}>P&L Agencia (MXN)</div>
+                            <div style={{fontSize:18,fontWeight:900,color:pos?"#1a7a3a":"#c02020"}}>{pos?"+":""}MX${fmt(pnlMXN,0)}</div>
+                            {form.moneda!=="MXN"&&<div style={{fontSize:9,color:"#8a7050"}}>{pos?"+":""}{fmtMon(pnlMon,form.moneda)} × TC {fmt(tc,4)}</div>}
+                          </div>
+                        </div>
+                      </div>
+                    )}
+                  </>
                 );
               })()}
 
               <hr className="hr" style={{marginBottom:18}}/>
-              <div className="g2" style={{marginBottom:20}}>
-                <div><div className="lbl">Estatus</div>
+              <div style={{display:"flex",gap:12,alignItems:"center",marginBottom:20}}>
+                <div style={{flex:1}}>
+                  <div className="lbl">Estatus</div>
                   <select value={form.estatus} onChange={e=>sF("estatus",e.target.value)}>
                     <option value="Booked">Booked</option>
                     <option value="Booked/Corregido">Booked/Corregido</option>
@@ -1860,6 +1918,7 @@ export default function BlotterBondsINVEX() {
                     <option value="Cancelada">Cancelada</option>
                   </select>
                 </div>
+                {legBalanceError()&&<div style={{fontSize:9,color:"#c02020",background:"#fff0f0",border:"1px solid #e8b0b0",borderRadius:3,padding:"6px 10px"}}>⚠ Los títulos de compra y venta no cuadran</div>}
               </div>
               <div style={{display:"flex",gap:10,justifyContent:"flex-end"}}>
                 <button className="btn-ghost" onClick={cerrarModal}>Cancelar</button>
