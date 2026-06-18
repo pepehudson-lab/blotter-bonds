@@ -1829,14 +1829,14 @@ export default function BlotterBondsINVEX() {
                         {leg==="compradores" ? "Compradores — pagan al desk" : "Vendedores — reciben del desk"}
                       </div>
                       {/* Column labels */}
-                      <div style={{display:"grid",gridTemplateColumns:"3fr 1fr 1.1fr 0.8fr 1fr 28px",gap:5,marginBottom:4}}>
+                      <div style={{display:"grid",gridTemplateColumns:"2.5fr 1.3fr 1.3fr 1.5fr 1fr 28px",gap:5,marginBottom:4}}>
                         {["Contraparte","Títulos","Px Sucio","Tasa %","Trader",""].map((l,i)=><div key={i} style={{fontSize:8,color:"#8a7050",letterSpacing:1,textTransform:"uppercase"}}>{l}</div>)}
                       </div>
                       {rows.map((r,i) => {
                         const imp = (parseFloat(r.px)||0)*(parseFloat(r.titulos)||0);
                         return (
                           <div key={i} style={{marginBottom:6}}>
-                            <div style={{display:"grid",gridTemplateColumns:"3fr 1fr 1.1fr 0.8fr 1fr 28px",gap:5}}>
+                            <div style={{display:"grid",gridTemplateColumns:"2.5fr 1.3fr 1.3fr 1.5fr 1fr 28px",gap:5}}>
                               <select value={r.contraparte} onChange={e=>setLeg(leg,i,"contraparte",e.target.value)} style={{borderColor,fontSize:11}}>
                                 <option value="">Contraparte…</option>
                                 {contrapartes.map(c=><option key={c}>{c}</option>)}
