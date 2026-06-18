@@ -908,7 +908,7 @@ export default function BlotterBondsINVEX() {
                         : <span style={{ fontSize: 10, color: "#8a7050" }}>{Number(t.titulos).toLocaleString("es-MX")}</span>
                       }
                     </td>
-                    <td className="td" style={{ textAlign: "right", color: "#1a7a3a", fontWeight: 800, fontSize: 12 }}>
+                    <td className="td" style={{ textAlign: "right", color: "#1a7a3a", fontWeight: 800, fontSize: 10 }}>
                       {t.compradores?.length ? t.compradores.map((r,i)=><div key={i}>{fmt(r.px,4)}</div>) : fmt(t.pxCompra,4)}
                     </td>
                     <td className="td" style={{ textAlign: "right", color: "#1a7a3a", fontWeight: 700, fontSize: 11 }}>MX${fmt(t.importeCompraMXN,0)}</td>
@@ -925,7 +925,7 @@ export default function BlotterBondsINVEX() {
                         : <span style={{ fontSize: 10, color: "#8a7050" }}>{Number(t.titulos).toLocaleString("es-MX")}</span>
                       }
                     </td>
-                    <td className="td" style={{ textAlign: "right", color: "#c02020", fontWeight: 800, fontSize: 12 }}>
+                    <td className="td" style={{ textAlign: "right", color: "#c02020", fontWeight: 800, fontSize: 10 }}>
                       {t.vendedores?.length ? t.vendedores.map((r,i)=><div key={i}>{fmt(r.px,4)}</div>) : fmt(t.pxVenta,4)}
                     </td>
                     <td className="td" style={{ textAlign: "right", color: "#c02020", fontWeight: 700, fontSize: 11 }}>MX${fmt(t.importeVentaMXN,0)}</td>
