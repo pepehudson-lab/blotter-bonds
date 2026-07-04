@@ -886,7 +886,7 @@ export default function BlotterBondsINVEX() {
                       title="Seleccionar todas"
                     />
                   </th>
-                  {[["id","ID"],["fecha","Fecha"],["emisor","Bono"],["moneda","Mon."],["titulos","Títulos"],["valorNominal","V.N."],["compradorCp","Comprador"],["_allocCpa","Allocation"],["pxCompra","Px.S. Cpa"],["importeCompraMXN","Imp.Cpa MXN"],["vendedorCp","Vendedor"],["_allocVta","Allocation"],["pxVenta","Px.S. Vta"],["importeVentaMXN","Imp.Vta MXN"],["diferencial","Dif.pts"],["pnl","P&L MXN"],["operador","Operador"],["estatus","Estatus"]].map(([c,l]) => (
+                  {[["fecha","Fecha"],["emisor","Bono"],["moneda","Mon."],["titulos","Títulos"],["valorNominal","V.N."],["compradorCp","Comprador"],["_allocCpa","Allocation"],["pxCompra","Px.S. Cpa"],["importeCompraMXN","Imp.Cpa MXN"],["vendedorCp","Vendedor"],["_allocVta","Allocation"],["pxVenta","Px.S. Vta"],["importeVentaMXN","Imp.Vta MXN"],["diferencial","Dif.pts"],["pnl","P&L MXN"],["operador","Operador"],["estatus","Estatus"]].map(([c,l]) => (
                     <th key={c} className="th" onClick={() => ordenar(c)}>{l} <SI col={c}/></th>
                   ))}
                 </tr>
@@ -898,7 +898,6 @@ export default function BlotterBondsINVEX() {
                     <td className="cb-cell" onClick={e => e.stopPropagation()}>
                       <input type="checkbox" checked={seleccionadas.has(t.id)} onChange={() => toggleSelec(t.id)} />
                     </td>
-                    <td className="td" style={{ color: "#9C0033", fontWeight: 700, fontSize: 10 }}>{t.id}</td>
                     <td className="td" style={{ color: "#8a7050", fontSize: 10 }}>{fmtFecha(t.fecha)}</td>
                     <td className="td">
                       <div style={{ color: "#1a1200", fontWeight: 600, fontSize: 12 }}>{t.emisor}</div>
@@ -966,7 +965,7 @@ export default function BlotterBondsINVEX() {
                   </tr>
                   {filaExp === t.id && (
                     <tr key={t.id+"-x"} style={{ background: "#f5f0e8" }}>
-                      <td colSpan={19} style={{ padding: "14px 16px 16px" }}>
+                      <td colSpan={18} style={{ padding: "14px 16px 16px" }}>
                         <div style={{ display: "grid", gridTemplateColumns: "1fr 60px 1fr 1fr", gap: 12 }}>
                           {/* COMPRADORES */}
                           <div style={{ background: "#f0faf4", border: "1px solid #143020", borderRadius: 4, padding: 14 }}>
@@ -1027,6 +1026,8 @@ export default function BlotterBondsINVEX() {
                         </div>
                         {/* ACCIONES */}
                         <div style={{ display:"flex", gap:8, alignItems:"center", flexWrap:"wrap", marginTop:12, paddingTop:12, borderTop:"1px solid #e0d4b8" }}>
+                          <span style={{ fontSize:9, color:"#9C0033", fontWeight:700, letterSpacing:1, fontFamily:"monospace" }}>{t.id}</span>
+                          <div style={{ width:1, height:14, background:"#d8ceb8" }} />
                           <span style={{ fontSize:9, color:"#8a7050", letterSpacing:1 }}>ESTATUS ACTUAL:</span>
                           <span className={`pill ${statusClass(t.estatus)}`} style={{fontSize:8}}>{t.estatus}</span>
                           {t.estatus !== "Cancelada" && (
