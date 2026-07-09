@@ -1,6 +1,7 @@
 import React, { useState, useMemo, useEffect, useCallback } from "react";
 import MonitorPrecios from "./MonitorPrecios.jsx";
 import { sb, sbAdmin } from "./supabase.js";
+import * as XLSX from "xlsx";
 
 // Valores por defecto — se sobreescriben con localStorage si existen
 const CONTRAPARTES_DEFAULT = [
@@ -129,6 +130,10 @@ export default function BlotterBondsINVEX() {
   const [busqEmisora, setBusqEmisora]   = useState("");
   const [emisoraElegida, setEmisoraEl]  = useState(null); // { emisora, proveedor } paso 2
   const [modoCorreccion, setModoCorr]   = useState(null); // ticket que se está corrigiendo
+  const [exportPanel,    setExportPanel] = useState(false);
+  const [exportDesde,    setExportDesde] = useState("");
+  const [exportHasta,    setExportHasta] = useState("");
+  const [exportEstatus,  setExportEst]   = useState("Todos");
 
   // ── AUTH (Supabase) ───────────────────────────────────────────────────────
   const [usuarios,    setUsuarios]  = useState([]);
@@ -469,6 +474,52 @@ export default function BlotterBondsINVEX() {
     setSelec(new Set());
     setFilaExp(null);
     cargarDatos();
+  };
+
+  const exportExcel = () => {
+    let lista = operaciones.map(t => ({ ...t, ...calcPnl(t) }));
+    if (exportDesde) lista = lista.filter(t => t.fecha >= exportDesde);
+    if (exportHasta) lista = lista.filter(t => t.fecha <= exportHasta);
+    if (exportEstatus !== "Todos") lista = lista.filter(t => t.estatus === exportEstatus);
+
+    const rows = lista.map(t => ({
+      "ID":             t.id,
+      "Fecha":          fmtFecha(t.fecha),
+      "Emisor":         t.emisor,
+      "ISIN":           t.isin || "",
+      "Tipo":           t.tipo,
+      "Cupón (%)":      t.cupon ?? "",
+      "Vencimiento":    fmtFecha(t.vencimiento),
+      "Tipo Venc.":     t.tipoVenc || "",
+      "Calificación":   t.calificacion || "",
+      "Moneda":         t.moneda,
+      "Títulos":        t.titulos,
+      "Valor Nominal":  t.valorNominal,
+      "Tipo Cambio":    t.tipoCambio,
+      "Comprador":      t.compradorCp,
+      "Px. Compra":     t.pxCompra,
+      "Importe Cpa MXN": t.importeCompraMXN,
+      "Vendedor":       t.vendedorCp,
+      "Px. Venta":      t.pxVenta,
+      "Importe Vta MXN": t.importeVentaMXN,
+      "Diferencial pts": t.diferencial,
+      "P&L MXN":        t.pnl,
+      "Operador":       t.operador || "",
+      "Estatus":        t.estatus,
+      "Notas":          t.notas || "",
+    }));
+
+    if (!rows.length) { alert("No hay operaciones con los filtros seleccionados."); return; }
+
+    const ws = XLSX.utils.json_to_sheet(rows);
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, "Operaciones");
+
+    const desde = exportDesde || "inicio";
+    const hasta = exportHasta || "hoy";
+    const est   = exportEstatus !== "Todos" ? `_${exportEstatus}` : "";
+    XLSX.writeFile(wb, `blotter_${desde}_${hasta}${est}.xlsx`);
+    setExportPanel(false);
   };
 
   const enriquecidas = useMemo(() => operaciones.map(t => ({ ...t, ...calcPnl(t) })), [operaciones]);
@@ -860,7 +911,40 @@ export default function BlotterBondsINVEX() {
               <option value="Todas">Todas las Monedas</option>
               {monedas.map(c => <option key={c}>{c}</option>)}
             </select>
-            <span style={{ marginLeft: "auto", fontSize: 9, color: "#8a7050", letterSpacing: 1 }}>{filtradas.length} OPERACIÓN{filtradas.length !== 1 ? "ES" : ""}</span>
+            <div style={{ position: "relative", marginLeft: "auto" }}>
+              <button className="btn-ghost" style={{ fontSize: 11, padding: "4px 10px" }} onClick={() => setExportPanel(p => !p)}>
+                ⬇ Exportar Excel
+              </button>
+              {exportPanel && (
+                <div style={{ position: "absolute", right: 0, top: "calc(100% + 6px)", zIndex: 200, background: "#2a1f0e", border: "1px solid #6a5030", borderRadius: 8, padding: 16, minWidth: 280, boxShadow: "0 4px 24px #0008", display: "flex", flexDirection: "column", gap: 10 }}>
+                  <div style={{ fontSize: 11, fontWeight: 700, color: "#d4a84b", letterSpacing: 1, marginBottom: 2 }}>EXPORTAR OPERACIONES</div>
+                  <label style={{ fontSize: 10, color: "#b09060", display: "flex", flexDirection: "column", gap: 4 }}>
+                    Fecha desde
+                    <input type="date" value={exportDesde} onChange={e => setExportDesde(e.target.value)} style={{ fontSize: 12 }} />
+                  </label>
+                  <label style={{ fontSize: 10, color: "#b09060", display: "flex", flexDirection: "column", gap: 4 }}>
+                    Fecha hasta
+                    <input type="date" value={exportHasta} onChange={e => setExportHasta(e.target.value)} style={{ fontSize: 12 }} />
+                  </label>
+                  <label style={{ fontSize: 10, color: "#b09060", display: "flex", flexDirection: "column", gap: 4 }}>
+                    Estatus
+                    <select value={exportEstatus} onChange={e => setExportEst(e.target.value)} style={{ fontSize: 12 }}>
+                      <option value="Todos">Todos</option>
+                      <option>Booked</option>
+                      <option>Liquidada</option>
+                      <option>Pendiente</option>
+                      <option>Cancelada</option>
+                      <option>Booked/Corregido</option>
+                    </select>
+                  </label>
+                  <div style={{ display: "flex", gap: 8, marginTop: 4 }}>
+                    <button className="btn-primary" style={{ flex: 1, fontSize: 11 }} onClick={exportExcel}>⬇ Descargar</button>
+                    <button className="btn-ghost" style={{ fontSize: 11 }} onClick={() => setExportPanel(false)}>Cancelar</button>
+                  </div>
+                </div>
+              )}
+            </div>
+            <span style={{ fontSize: 9, color: "#8a7050", letterSpacing: 1 }}>{filtradas.length} OPERACIÓN{filtradas.length !== 1 ? "ES" : ""}</span>
           </div>
 
           {seleccionadas.size > 0 && (
