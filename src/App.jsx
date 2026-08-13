@@ -170,6 +170,7 @@ export default function BlotterBondsINVEX() {
       traders_venta: null,
       operador: op.operador || null,
       estatus: op.estatus || 'Booked', notas: op.notas || null,
+      instrumento_manual: !!op.instrumentoManual,
     };
   };
   const mapOpFromDb = (row) => ({
@@ -191,6 +192,7 @@ export default function BlotterBondsINVEX() {
     tasaVenta: row.tasa_venta != null ? Number(row.tasa_venta) : null,
     tradersVenta: row.traders_venta || [],
     operador: row.operador, estatus: row.estatus, notas: row.notas,
+    instrumentoManual: !!row.instrumento_manual,
   });
 
   const cargarDatos = useCallback(async () => {
@@ -307,7 +309,7 @@ export default function BlotterBondsINVEX() {
   };
 
   const emptyLegRow = () => ({ contraparte: "", titulos: "", px: "", tasa: "", trader: "" });
-  const formVacio = { fecha: new Date().toISOString().slice(0, 10), fechaValor: "T+1", emisor: "", isin: "", tipo: "Gubernamental", cupon: "", vencimiento: "", tipoVenc: "Bullet", calificacion: "A", moneda: "MXN", valorNominal: "100", tipoCambio: "1", compradores: [emptyLegRow()], vendedores: [emptyLegRow()], estatus: "Booked" };
+  const formVacio = { fecha: new Date().toISOString().slice(0, 10), fechaValor: "T+1", emisor: "", isin: "", tipo: "Gubernamental", cupon: "", vencimiento: "", tipoVenc: "Bullet", calificacion: "A", moneda: "MXN", valorNominal: "100", tipoCambio: "1", compradores: [emptyLegRow()], vendedores: [emptyLegRow()], estatus: "Booked", instrumentoManual: true };
   const [form, setForm] = useState(formVacio);
   const sF = (k, v) => setForm(f => ({ ...f, [k]: v }));
 
@@ -343,7 +345,7 @@ export default function BlotterBondsINVEX() {
     if (!emisora || !serie) return;
     setPlantillaSel(key);
     // Pre-llena emisor y serie
-    setForm(f => ({ ...f, emisor: `${emisora} ${serie}`, tipo: "Gubernamental", moneda: "MXN" }));
+    setForm(f => ({ ...f, emisor: `${emisora} ${serie}`, tipo: "Gubernamental", moneda: "MXN", instrumentoManual: false }));
     // Intenta obtener precio y datos del bono
     try {
       const res  = await fetch(`${import.meta.env.VITE_API_URL || ''}/api/precio?emisora=${emisora}&serie=${serie}&proveedor=${proveedor}`);
@@ -986,7 +988,10 @@ export default function BlotterBondsINVEX() {
                     <td className="td" style={{ color: "#8a7050", fontSize: 10 }}>{fmtFecha(t.fecha)}</td>
                     <td className="td" style={{ color: "#8a7050", fontSize: 10 }}>{fmtFecha(t.fechaLiquidacion)}</td>
                     <td className="td">
-                      <div style={{ color: "#1a1200", fontWeight: 600, fontSize: 12 }}>{t.emisor}</div>
+                      <div style={{ color: "#1a1200", fontWeight: 600, fontSize: 12, display: "flex", alignItems: "center", gap: 5 }}>
+                        {t.emisor}
+                        {t.instrumentoManual && <span title="Instrumento manual — no está en el catálogo Valmer/PIP" style={{ fontSize: 8, fontWeight: 800, color: "#b05010", background: "#fdf0dc", border: "1px solid #e8c090", borderRadius: 2, padding: "1px 4px", letterSpacing: 0.5 }}>⚠ MANUAL</span>}
+                      </div>
                       <div style={{ color: "#8a7050", fontSize: 9, marginTop: 1 }}>{t.isin}</div>
                     </td>
                     <td className="td"><span className={`pill p-${t.moneda.toLowerCase()}`}>{t.moneda}</span></td>
@@ -1114,6 +1119,12 @@ export default function BlotterBondsINVEX() {
                         <div style={{ display:"flex", gap:8, alignItems:"center", flexWrap:"wrap", marginTop:12, paddingTop:12, borderTop:"1px solid #e0d4b8" }}>
                           <span style={{ fontSize:9, color:"#9C0033", fontWeight:700, letterSpacing:1, fontFamily:"monospace" }}>{t.id}</span>
                           <div style={{ width:1, height:14, background:"#d8ceb8" }} />
+                          {t.instrumentoManual && (
+                            <>
+                              <span style={{ fontSize:9, fontWeight:800, color:"#b05010", background:"#fdf0dc", border:"1px solid #e8c090", borderRadius:2, padding:"2px 6px", letterSpacing:0.5 }}>⚠ INSTRUMENTO MANUAL — no está en Valmer/PIP</span>
+                              <div style={{ width:1, height:14, background:"#d8ceb8" }} />
+                            </>
+                          )}
                           <span style={{ fontSize:9, color:"#8a7050", letterSpacing:1 }}>ESTATUS ACTUAL:</span>
                           <span className={`pill ${statusClass(t.estatus)}`} style={{fontSize:8}}>{t.estatus}</span>
                           {t.estatus !== "Cancelada" && (
@@ -1724,8 +1735,12 @@ export default function BlotterBondsINVEX() {
                 </div>
               </div>
               <div className="g2" style={{marginBottom:12}}>
-                <div><div className="lbl">Emisor</div><input placeholder="ej. Mexico Bonos, PEMEX" value={form.emisor} onChange={e=>sF("emisor",e.target.value)}/></div>
-                <div><div className="lbl">ISIN</div><input placeholder="ej. MX0MGO0000Y6" value={form.isin} onChange={e=>sF("isin",e.target.value)}/></div>
+                <div>
+                  <div className="lbl">Emisor</div>
+                  <input placeholder="ej. Mexico Bonos, PEMEX" value={form.emisor} onChange={e=>{ setPlantillaSel(""); setForm(f=>({...f,emisor:e.target.value,instrumentoManual:true})); }}/>
+                  {form.instrumentoManual && form.emisor && <div style={{fontSize:9,color:"#b05010",marginTop:4}}>⚠ Instrumento manual — no está en el catálogo Valmer/PIP</div>}
+                </div>
+                <div><div className="lbl">ISIN</div><input placeholder="ej. MX0MGO0000Y6" value={form.isin} onChange={e=>{ setPlantillaSel(""); setForm(f=>({...f,isin:e.target.value,instrumentoManual:true})); }}/></div>
               </div>
               <div className="g3" style={{marginBottom:12}}>
                 <div><div className="lbl">Cupón (%)</div><input type="number" step="0.001" placeholder="4.25" value={form.cupon} onChange={e=>sF("cupon",e.target.value)}/></div>

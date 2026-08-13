@@ -83,6 +83,7 @@ ALTER TABLE public.operaciones ADD COLUMN IF NOT EXISTS traders_venta     JSONB;
 ALTER TABLE public.operaciones ADD COLUMN IF NOT EXISTS compradores       JSONB;
 ALTER TABLE public.operaciones ADD COLUMN IF NOT EXISTS vendedores        JSONB;
 ALTER TABLE public.operaciones DROP COLUMN IF EXISTS tasa;
+ALTER TABLE public.operaciones ADD COLUMN IF NOT EXISTS instrumento_manual BOOLEAN DEFAULT false;
 
 -- ============================================================
 -- SEED: default admin user
