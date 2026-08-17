@@ -995,6 +995,12 @@ export default function BlotterBondsINVEX() {
                       <div style={{ color: "#1a1200", fontWeight: 600, fontSize: 12, display: "flex", alignItems: "center", gap: 5 }}>
                         {t.emisor}
                         {t.instrumentoManual && <span title="Instrumento manual — no está en el catálogo Valmer/PIP" style={{ fontSize: 8, fontWeight: 800, color: "#b05010", background: "#fdf0dc", border: "1px solid #e8c090", borderRadius: 2, padding: "1px 4px", letterSpacing: 0.5 }}>⚠ MANUAL</span>}
+                        {(t.notaCompra || t.notaVenta) && (
+                          <span
+                            title={[t.notaCompra && `Compra: ${t.notaCompra}`, t.notaVenta && `Venta: ${t.notaVenta}`].filter(Boolean).join("\n")}
+                            style={{ fontSize: 11, cursor: "help" }}
+                          >📝</span>
+                        )}
                       </div>
                       <div style={{ color: "#8a7050", fontSize: 9, marginTop: 1 }}>{t.isin}</div>
                     </td>
