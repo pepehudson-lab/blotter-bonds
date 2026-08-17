@@ -45,10 +45,16 @@ CREATE TABLE IF NOT EXISTS public.operaciones (
   operador          TEXT,    -- derived summary of all traders
   estatus           TEXT DEFAULT 'Booked',
   notas             TEXT,
+  nota_compra       TEXT,    -- free-text note for the buy leg (compradores box on the ticket)
+  nota_venta        TEXT,    -- free-text note for the sell leg (vendedores box on the ticket)
   created_at        TIMESTAMPTZ DEFAULT NOW()
 );
 ALTER TABLE public.operaciones ENABLE ROW LEVEL SECURITY;
 CREATE POLICY "operaciones_all" ON public.operaciones FOR ALL TO authenticated USING (true) WITH CHECK (true);
+
+-- Migration for existing databases (safe to re-run):
+-- ALTER TABLE public.operaciones ADD COLUMN IF NOT EXISTS nota_compra TEXT;
+-- ALTER TABLE public.operaciones ADD COLUMN IF NOT EXISTS nota_venta TEXT;
 
 -- 3. LISTAS MAESTRAS
 CREATE TABLE IF NOT EXISTS public.contrapartes  (nombre TEXT PRIMARY KEY);

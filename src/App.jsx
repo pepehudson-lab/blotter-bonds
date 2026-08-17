@@ -170,6 +170,7 @@ export default function BlotterBondsINVEX() {
       traders_venta: null,
       operador: op.operador || null,
       estatus: op.estatus || 'Booked', notas: op.notas || null,
+      nota_compra: op.notaCompra || null, nota_venta: op.notaVenta || null,
       instrumento_manual: !!op.instrumentoManual,
     };
   };
@@ -192,6 +193,7 @@ export default function BlotterBondsINVEX() {
     tasaVenta: row.tasa_venta != null ? Number(row.tasa_venta) : null,
     tradersVenta: row.traders_venta || [],
     operador: row.operador, estatus: row.estatus, notas: row.notas,
+    notaCompra: row.nota_compra || "", notaVenta: row.nota_venta || "",
     instrumentoManual: !!row.instrumento_manual,
   });
 
@@ -309,7 +311,7 @@ export default function BlotterBondsINVEX() {
   };
 
   const emptyLegRow = () => ({ contraparte: "", titulos: "", px: "", tasa: "", trader: "" });
-  const formVacio = { fecha: new Date().toISOString().slice(0, 10), fechaValor: "T+1", emisor: "", isin: "", tipo: "Gubernamental", cupon: "", vencimiento: "", tipoVenc: "Bullet", calificacion: "A", moneda: "MXN", valorNominal: "100", tipoCambio: "1", compradores: [emptyLegRow()], vendedores: [emptyLegRow()], estatus: "Booked", instrumentoManual: true };
+  const formVacio = { fecha: new Date().toISOString().slice(0, 10), fechaValor: "T+1", emisor: "", isin: "", tipo: "Gubernamental", cupon: "", vencimiento: "", tipoVenc: "Bullet", calificacion: "A", moneda: "MXN", valorNominal: "100", tipoCambio: "1", compradores: [emptyLegRow()], vendedores: [emptyLegRow()], notaCompra: "", notaVenta: "", estatus: "Booked", instrumentoManual: true };
   const [form, setForm] = useState(formVacio);
   const sF = (k, v) => setForm(f => ({ ...f, [k]: v }));
 
@@ -510,6 +512,8 @@ export default function BlotterBondsINVEX() {
       "Operador":       t.operador || "",
       "Estatus":        t.estatus,
       "Notas":          t.notas || "",
+      "Nota Compra":    t.notaCompra || "",
+      "Nota Venta":     t.notaVenta || "",
     }));
 
     if (!rows.length) { alert("No hay operaciones con los filtros seleccionados."); return; }
@@ -1076,6 +1080,12 @@ export default function BlotterBondsINVEX() {
                             <div style={{ marginTop: 8, paddingTop: 8, borderTop: "1px solid #c8e0d0", fontSize: 10, color: "#1a7a3a", fontWeight: 700 }}>
                               Total: {fmtMon(t.importeCompra, t.moneda)}{t.moneda!=="MXN"&&` = MX$${fmt(t.importeCompraMXN,0)}`}
                             </div>
+                            {t.notaCompra && (
+                              <div style={{ marginTop: 8, paddingTop: 8, borderTop: "1px solid #c8e0d0", fontSize: 10, color: "#3a6040", whiteSpace: "pre-wrap" }}>
+                                <span style={{ fontSize: 8, color: "#1a7a3a", letterSpacing: 1, textTransform: "uppercase", display: "block", marginBottom: 3 }}>Nota</span>
+                                {t.notaCompra}
+                              </div>
+                            )}
                           </div>
                           {/* CENTER */}
                           <div style={{ display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", background: "#f5f2ee", border: "1px solid #d8ceb8", borderRadius: 4, gap: 3 }}>
@@ -1101,6 +1111,12 @@ export default function BlotterBondsINVEX() {
                             <div style={{ marginTop: 8, paddingTop: 8, borderTop: "1px solid #ecd0d0", fontSize: 10, color: "#c02020", fontWeight: 700 }}>
                               Total: {fmtMon(t.importeVenta, t.moneda)}{t.moneda!=="MXN"&&` = MX$${fmt(t.importeVentaMXN,0)}`}
                             </div>
+                            {t.notaVenta && (
+                              <div style={{ marginTop: 8, paddingTop: 8, borderTop: "1px solid #ecd0d0", fontSize: 10, color: "#603040", whiteSpace: "pre-wrap" }}>
+                                <span style={{ fontSize: 8, color: "#c02020", letterSpacing: 1, textTransform: "uppercase", display: "block", marginBottom: 3 }}>Nota</span>
+                                {t.notaVenta}
+                              </div>
+                            )}
                           </div>
                           {/* P&L */}
                           <div style={{ background: "#f5fff8", border: "1px solid #b8dcc8", borderRadius: 4, padding: 14 }}>
@@ -1776,7 +1792,7 @@ export default function BlotterBondsINVEX() {
                 const colHdr = (label, accent) => (
                   <div style={{fontSize:9,color:accent,letterSpacing:1,fontWeight:700,padding:"2px 0"}}>{label}</div>
                 );
-                const renderLeg = (leg, accent, borderColor, bg) => {
+                const renderLeg = (leg, accent, borderColor, bg, notaKey) => {
                   const rows = form[leg];
                   const filled = legFilledRows(rows);
                   const totTit = legSum(filled), totImp = legImporte(filled), tc = parseFloat(form.tipoCambio)||1;
@@ -1814,6 +1830,15 @@ export default function BlotterBondsINVEX() {
                       })}
                       <button onClick={()=>addLeg(leg)} style={{background:"none",border:`1px dashed ${accent}`,borderRadius:3,cursor:"pointer",color:"#8a7050",fontSize:10,padding:"4px 10px",fontFamily:"inherit",width:"100%",marginTop:2}}>＋ agregar {leg==="compradores"?"comprador":"vendedor"}</button>
                       {totTit>0&&<div style={{fontSize:9,color:accent,marginTop:6,fontWeight:700}}>Total: {totTit.toLocaleString("es-MX")} títulos · {fmtMon(totImp,form.moneda)}{form.moneda!=="MXN"&&` = MX$${fmt(totImp*tc,0)}`}</div>}
+                      <div style={{marginTop:8}}>
+                        <div style={{fontSize:8,color:"#8a7050",letterSpacing:1,textTransform:"uppercase",marginBottom:3}}>Notas {leg==="compradores"?"compra":"venta"}</div>
+                        <textarea
+                          placeholder="Texto libre, condiciones, referencias…"
+                          value={form[notaKey]}
+                          onChange={e=>sF(notaKey,e.target.value)}
+                          style={{borderColor,fontSize:11,width:"100%",minHeight:44,resize:"vertical",fontFamily:"inherit",padding:"6px 8px",boxSizing:"border-box",background:"#fff",border:`1px solid ${borderColor}`,borderRadius:3}}
+                        />
+                      </div>
                     </div>
                   );
                 };
@@ -1827,13 +1852,13 @@ export default function BlotterBondsINVEX() {
                 return (
                   <>
                     <div style={{display:"grid",gridTemplateColumns:"1fr 50px 1fr",gap:8,marginBottom:16}}>
-                      {renderLeg("compradores","#1a7a3a","#143020","#f0faf4")}
+                      {renderLeg("compradores","#1a7a3a","#143020","#f0faf4","notaCompra")}
                       <div style={{display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",background:"#f5f2ee",border:"1px solid #d8ceb8",borderRadius:4,gap:4}}>
                         <div style={{fontSize:18,color:"#9C0033"}}>⇒</div>
                         {dif!==0&&<div style={{fontSize:10,fontWeight:900,color:pnlColor(dif),textAlign:"center",lineHeight:1.3}}>{fmtDif(dif,3)}<br/><span style={{fontSize:8,color:"#8a7050"}}>pts</span></div>}
                         {balErr&&<div style={{fontSize:8,color:"#c02020",textAlign:"center",padding:"0 4px"}}>⚠ {balErr}</div>}
                       </div>
-                      {renderLeg("vendedores","#c02020","#f0c0c0","#fff5f5")}
+                      {renderLeg("vendedores","#c02020","#f0c0c0","#fff5f5","notaVenta")}
                     </div>
                     {impCpa>0&&impVta>0&&(
                       <div style={{background:pos?"#f0fff8":"#fff0f0",border:`1px solid ${pos?"#a0d8b8":"#e8b0b0"}`,borderRadius:4,padding:"12px 18px",marginBottom:18}}>
